@@ -1,9 +1,8 @@
 ## BabylonJS MeshLine
 
 Uses https://github.com/leon/starter-babylonjs.git
-Port of https://github.com/spite/THREE.MeshLine.git 
 
-Based on the bundler Vite for extremely fast reloading and bundling.
+Port of https://github.com/spite/THREE.MeshLine.git 
 
 ### Install deps `npm install`
 
