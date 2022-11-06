@@ -7,8 +7,8 @@ import '@babylonjs/inspector'
 
 import './style.css'
 import { MeshLineBuilder } from './MeshLine'
-import { LineBuilder } from './LineBuilder'
 import { svgDemo } from './svg'
+import { GreasedLine, GreasedLineMaterial } from './LineBuilder'
 
 const canvas: HTMLCanvasElement = document.getElementById('app') as HTMLCanvasElement
 const engine = createEngine(canvas)
@@ -23,16 +23,20 @@ function createLights() {
 }
 
 function makeLine(points: Float32Array, color: Color3) {
-  const ml = LineBuilder.CreateGreasedLine('meshline', scene, {
-    points,
+
+  const mat = new GreasedLineMaterial('meshline', scene, {
     useMap: false,
     color,
     opacity: 1,
     resolution: new Vector2(engine.getRenderWidth(), engine.getRenderHeight()),
     sizeAttenuation: false,
     lineWidth: 10,
+  })
+  const ml = new GreasedLine('meshline', scene, {
+    points,
     widthCallback: (pw) => pw * 6,
   })
+  ml.material = mat
 }
 
 function createLine() {

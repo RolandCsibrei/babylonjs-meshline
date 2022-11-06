@@ -1,7 +1,7 @@
 
 'use strict'
 import { ArcRotateCamera, Color3, Mesh, Scene, Texture, Vector2, Vector3 } from "@babylonjs/core";
-import { GreasedLine, LineBuilder } from "./LineBuilder";
+import { GreasedLine, GreasedLineMaterial } from "./LineBuilder";
 import SvgParser from "svg-path-parser"
 
 var colors = [
@@ -39,39 +39,45 @@ export function svgDemo(scene: Scene) {
     const engine = scene.getEngine()
     const map = new Texture('assets/stroke.png')
 
+    const material = new GreasedLineMaterial("line", scene, {
+        map,
+        useMap: true,
+        color: new Color3(colors[1]),
+        opacity: 1,
+        resolution: new Vector2(engine.getRenderWidth(), engine.getRenderHeight()),
+        // sizeAttenuation: true,
+        lineWidth: 12,
+        repeat: new Vector2(1,1),
+        visibility:0
+    })
+
     readSVG().then(s => {
         drawSVG(s)
 
         const camera = scene.activeCamera as ArcRotateCamera
 
+        let v = 0
+scene.onBeforeRenderObservable.add(() => {
+material.setParameters({visibility: v})
+v+=scene.getAnimationRatio() * 0.001
+})
+
         // camera.target = new Vector3(620, 390, 0)
     })
 
+
+
     function makeLine(name: string, points: Float32Array) {
-
-        const gl = LineBuilder.CreateGreasedLine(name, scene, {
-            points,
-            map,
-            useMap: false,
-            color: new Color3(colors[3]),
-            opacity: 1,
-            resolution: new Vector2(engine.getRenderWidth(), engine.getRenderHeight()),
-            sizeAttenuation: false,
-            lineWidth: 4,
-            // depthWrite: false,
-            // depthTest: false,
-            // transparent: true
-
+        const gl = new GreasedLine(name, scene, {
+            points
         })
-
+        gl.material = material
         return gl
-
-
     }
 
     function readSVG(): Promise<string> {
 
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve) {
             var ajax = new XMLHttpRequest();
             ajax.open("GET", "assets/worldLow.svg", true);
             ajax.send();
@@ -131,12 +137,10 @@ export function svgDemo(scene: Scene) {
                     x = px;
                     y = py + segment.y;
                     addPos(x, y)
-                    // line.vertices.push( new THREE.Vector3( x, y, 0 ) );
                 } else if (segment.code === "h") {
                     x = px + segment.x;
                     y = py;
                     addPos(x, y)
-                    // line.vertices.push( new THREE.Vector3( x, y, 0 ) );
                 } else if (segment.code === "H") {
                     x = segment.x;
                     y = py;
@@ -149,7 +153,6 @@ export function svgDemo(scene: Scene) {
                     x = ox;
                     y = oy;
                     addPos(x, y)
-                    // add line
                     positions.push(pos)
                 }
                 px = x;
@@ -171,7 +174,7 @@ export function svgDemo(scene: Scene) {
         //     Mesh.MergeMeshes(greasedLinesFiltered)
         // })
 
-        Mesh.MergeMeshes(greasedLines.map(gl => gl.mesh))
+        // Mesh.MergeMeshes(greasedLines)
 
     }
 

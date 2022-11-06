@@ -2,7 +2,7 @@
  * @author roland@babylonjs.xyz
  */
 
-import {
+ import {
   Matrix,
   Ray,
   Vector3,
@@ -22,6 +22,11 @@ import {
 
 export interface GreasedLineParameters {
   points?: Vector3[] | Float32Array
+  widthCallback?: WidthCallback
+}
+
+
+export interface GreasedLineMaterialParameters {
   lineWidth?: number
   map?: Texture
   alphaMap?: Texture
@@ -39,37 +44,36 @@ export interface GreasedLineParameters {
   alphaTest?: number
   repeat?: Vector2
   uvOffset?: Vector2
-  widthCallback?: WidthCallback
 }
 
 type WidthCallback = (pointIndex: number) => number
 
-export class LineBuilder {
-  public static CreateGreasedLine(name: string, scene: Scene, parameters?: GreasedLineParameters) {
-    parameters = parameters || {}
+// export class LineBuilder {
+//   public static CreateGreasedLine(name: string, scene: Scene, parameters?: GreasedLineParameters) {
+//     parameters = parameters || {}
 
-    const engine = scene.getEngine()
+//     const engine = scene.getEngine()
 
-    parameters.useMap = parameters.useMap ?? false
-    parameters.useAlphaMap = parameters.useAlphaMap ?? false
-    parameters.color = parameters.color ?? Color3.Black()
-    parameters.opacity = parameters.opacity ?? 1
-    parameters.resolution = parameters.resolution ?? new Vector2(engine.getRenderWidth(), engine.getRenderHeight())
-    parameters.sizeAttenuation = parameters.sizeAttenuation ?? false
-    parameters.useDash = parameters.useDash ?? false
-    parameters.dashArray = parameters.dashArray ?? 0
-    parameters.dashOffset = parameters.dashOffset ?? 0
-    parameters.dashRatio = parameters.dashRatio ?? 0
-    parameters.visibility = parameters.visibility ?? 1
-    parameters.alphaTest = parameters.alphaTest ?? 1
-    parameters.repeat = parameters.repeat ?? new Vector2(1, 1)
-    parameters.uvOffset = parameters.uvOffset ?? new Vector2(0, 0)
+//     parameters.useMap = parameters.useMap ?? false
+//     parameters.useAlphaMap = parameters.useAlphaMap ?? false
+//     parameters.color = parameters.color ?? Color3.Black()
+//     parameters.opacity = parameters.opacity ?? 1
+//     parameters.resolution = parameters.resolution ?? new Vector2(engine.getRenderWidth(), engine.getRenderHeight())
+//     parameters.sizeAttenuation = parameters.sizeAttenuation ?? false
+//     parameters.useDash = parameters.useDash ?? false
+//     parameters.dashArray = parameters.dashArray ?? 0
+//     parameters.dashOffset = parameters.dashOffset ?? 0
+//     parameters.dashRatio = parameters.dashRatio ?? 0
+//     parameters.visibility = parameters.visibility ?? 1
+//     parameters.alphaTest = parameters.alphaTest ?? 1
+//     parameters.repeat = parameters.repeat ?? new Vector2(1, 1)
+//     parameters.uvOffset = parameters.uvOffset ?? new Vector2(0, 0)
 
-    return new GreasedLine(name, scene, parameters)
-  }
-}
+//     return new GreasedLine(name, scene, parameters.points)
+//   }
+// }
 
-export class GreasedLine {
+export class GreasedLine extends Mesh {
   private positions: number[]
   private previous: number[]
   private next: number[]
@@ -80,15 +84,17 @@ export class GreasedLine {
   private uvs: number[]
   private counters: number[]
   private _points: Float32Array | Vector3[]
-  private _geometry: Nullable<Geometry> = null
+  // private _geometry: Nullable<Geometry> = null
 
-  public mesh: Mesh
+  // public mesh: Mesh
   private _material: Nullable<GreasedLineMaterial> = null
 
   private _matrixWorld: Matrix
 
-  constructor(public name: string, private _scene: Scene, private _parameters: GreasedLineParameters) {
-    this.mesh = new Mesh(this.name, this._scene)
+  constructor(public name: string,  _scene: Scene,  private _parameters: GreasedLineParameters) {
+   super(name, _scene, null, null, false, false)
+   
+    // this.mesh = new Mesh(this.name, this._scene)
 
     this.positions = []
     this.indices = []
@@ -101,20 +107,20 @@ export class GreasedLine {
     this.counters = []
 
     this._points = new Float32Array()
-    this._geometry = null
+    // this._geometry = null
 
     // Used to raycast
     this._matrixWorld = new Matrix()
 
-    this.setGeometry(_parameters.points)
+    this.setGeometry(this._parameters.points)
 
-    var material = new GreasedLineMaterial('greasedLine', _scene, this._parameters)
-    this.mesh.material = material
+    // var material = new GreasedLineMaterial('greasedLine', _scene, this._parameters)
+    // this.mesh.material = material
   }
 
-  public get geometry() {
-    return this
-  }
+  // public get geometry() {
+  //   return this
+  // }
 
   public get points() {
     return this._points
@@ -352,29 +358,30 @@ export class GreasedLine {
     vertexData.indices = this.indices
     vertexData.uvs = this.uvs
 
-    vertexData.applyToMesh(this.mesh)
+    vertexData.applyToMesh(this)
 
     const engine = this._scene.getEngine()
 
     const previousBuffer = new Buffer(engine, this.previous, false, 3)
-    this.mesh.setVerticesBuffer(previousBuffer.createVertexBuffer('previous', 0, 3))
+    this.setVerticesBuffer(previousBuffer.createVertexBuffer('previous', 0, 3))
 
     const nextBuffer = new Buffer(engine, this.next, false, 3)
-    this.mesh.setVerticesBuffer(nextBuffer.createVertexBuffer('next', 0, 3))
+    this.setVerticesBuffer(nextBuffer.createVertexBuffer('next', 0, 3))
 
     const sideBuffer = new Buffer(engine, this.side, false, 1)
-    this.mesh.setVerticesBuffer(sideBuffer.createVertexBuffer('side', 0, 1))
+    this.setVerticesBuffer(sideBuffer.createVertexBuffer('side', 0, 1))
 
     const widthBuffer = new Buffer(engine, this.width, false, 1)
-    this.mesh.setVerticesBuffer(widthBuffer.createVertexBuffer('width', 0, 1))
+    this.setVerticesBuffer(widthBuffer.createVertexBuffer('width', 0, 1))
 
     const countersBuffer = new Buffer(engine, this.counters, false, 1)
-    this.mesh.setVerticesBuffer(countersBuffer.createVertexBuffer('counters', 0, 1))
-    if (this.mesh.material) {
-      this.mesh.material.dispose()
-    }
-    var material = new GreasedLineMaterial('greasedLine', this._scene, this._parameters)
-    this.mesh.material = material
+    this.setVerticesBuffer(countersBuffer.createVertexBuffer('counters', 0, 1))
+   
+    // if (this.material) {
+    //   this.material.dispose()
+    // }
+    // var material = new GreasedLineMaterial('greasedLine', this._scene, this._parameters)
+    // this.material = material
 
     console.log('Line updated', this.name)
 
@@ -384,9 +391,9 @@ export class GreasedLine {
     // this.useBoundingInfoFromGeometry = true
   }
 
-  public setParameters(parameters: GreasedLineParameters) {
-    ;(this.mesh.material as GreasedLineMaterial).setParameters(parameters)
-  }
+  // public setParameters(parameters: GreasedLineParameters) {
+  //   ;(this.material as GreasedLineMaterialParameters).setParameters(parameters)
+  // }
 
   public memcpy(src: Float32Array, srcOffset: number, dst: Float32Array, dstOffset: number, length: number) {
     src = srcOffset
@@ -408,12 +415,12 @@ export class GreasedLine {
 }
 
 export class GreasedLineMaterial extends ShaderMaterial {
-  private _parameters: GreasedLineParameters
+  private _parameters: GreasedLineMaterialParameters
 
   private static _bton(bool?: boolean) {
     return bool ? 1 : 0
   }
-  constructor(name: string, scene: Scene, parameters: GreasedLineParameters) {
+  constructor(name: string, scene: Scene, parameters: GreasedLineMaterialParameters) {
     super(
       name,
       scene,
@@ -457,7 +464,7 @@ export class GreasedLineMaterial extends ShaderMaterial {
     // })
   }
 
-  public setParameters(parameters: GreasedLineParameters) {
+  public setParameters(parameters: GreasedLineMaterialParameters) {
     this._parameters = { ...this._parameters, ...parameters }
 
     this.setFloat('lineWidth', this._parameters.lineWidth ?? 1)
