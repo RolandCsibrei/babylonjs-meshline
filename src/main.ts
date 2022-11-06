@@ -7,12 +7,14 @@ import '@babylonjs/inspector'
 
 import './style.css'
 import { MeshLineBuilder } from './MeshLine'
+import { LineBuilder } from './LineBuilder'
+import { svgDemo } from './svg'
 
 const canvas: HTMLCanvasElement = document.getElementById('app') as HTMLCanvasElement
 const engine = createEngine(canvas)
 const scene = createScene()
 
-createPBRSkybox()
+// createPBRSkybox()
 createArcRotateCamera()
 
 function createLights() {
@@ -21,7 +23,7 @@ function createLights() {
 }
 
 function makeLine(points: Float32Array, color: Color3) {
-  const ml = MeshLineBuilder.CreateMeshLine('meshline', scene, {
+  const ml = LineBuilder.CreateGreasedLine('meshline', scene, {
     points,
     useMap: false,
     color,
@@ -80,7 +82,8 @@ function createLine() {
  */
 async function main() {
   createLights()
-  createLine()
+  // createLine()
+  svgDemo(scene)
 
   await scene.debugLayer.show()
 
