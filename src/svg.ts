@@ -1,200 +1,208 @@
-
 'use strict'
-import { ArcRotateCamera, Color3, Mesh, Scene, Texture, Vector2, Vector3 } from "@babylonjs/core";
-import { GreasedLine, GreasedLineMaterial } from "./LineBuilder";
-import SvgParser from "svg-path-parser"
+import { ArcRotateCamera, Color3, Material, Mesh, Scene, Texture, Vector2, Vector3 } from '@babylonjs/core'
+import { GreasedLine, GreasedLineMaterial } from './LineBuilder'
+import SvgParser from 'svg-path-parser'
 
-var colors = [
-    0xed6a5a,
-    0xf4f1bb,
-    0x9bc1bc,
-    0x5ca4a9,
-    0xe6ebe0,
-    0xf0b67f,
-    0xfe5f55,
-    0xd6d1b1,
-    0xc7efcf,
-    0xeef5db,
-    0x50514f,
-    0xf25f5c,
-    0xffe066,
-    0x247ba0,
-    0x70c1b3
-];
-
-// var resolution = new THREE.Vector2( window.innerWidth, window.innerHeight );
-// var svg = new THREE.Object3D();
-// scene.add( svg );
-
-// init()
-// render();
+const colors = [
+  0xed6a5a, 0xf4f1bb, 0x9bc1bc, 0x5ca4a9, 0xe6ebe0, 0xf0b67f, 0xfe5f55, 0xd6d1b1, 0xc7efcf, 0xeef5db, 0x50514f, 0xf25f5c, 0xffe066,
+  0x247ba0, 0x70c1b3,
+]
 
 interface Country {
-    name: string
-    positions: number[]
+  name: string
+  positions: number[]
 }
 
-
 export function svgDemo(scene: Scene) {
-    const engine = scene.getEngine()
-    const map = new Texture('assets/stroke.png')
+  const engine = scene.getEngine()
+  const map = new Texture('assets/stroke.png')
 
-    const material = new GreasedLineMaterial("line", scene, {
-        map,
-        useMap: true,
-        color: new Color3(colors[1]),
-        opacity: 1,
-        resolution: new Vector2(engine.getRenderWidth(), engine.getRenderHeight()),
-        // sizeAttenuation: true,
-        lineWidth: 12,
-        repeat: new Vector2(1,1),
-        visibility:0
+  const materials: GreasedLineMaterial[] = []
+
+  readSVG().then((s) => {
+    drawSVG(s)
+
+    // const camera = scene.active@Camera as ArcRotateCamera
+
+    let v = 0
+    const uvOffset = new Vector2(0, 0)
+    scene.onBeforeRenderObservable.add(() => {
+      // materials.forEach(m => { m.setParameters({ visibility: v, uvOffset }) })
+      // v += scene.getAnimationRatio() * 0.001
+      // uvOffset.x += scene.getAnimationRatio() * 0.001
     })
 
-    readSVG().then(s => {
-        drawSVG(s)
+    // camera.target = new Vector3(620, 390, 0)
+  })
 
-        const camera = scene.activeCamera as ArcRotateCamera
-
-        let v = 0
-scene.onBeforeRenderObservable.add(() => {
-material.setParameters({visibility: v})
-v+=scene.getAnimationRatio() * 0.001
-})
-
-        // camera.target = new Vector3(620, 390, 0)
+  function makeLine(name: string, points: Float32Array | Float32Array[] | Vector3[][]) {
+    const gl = new GreasedLine(name, scene, {
+      points,
     })
 
+    const material = new GreasedLineMaterial('line', scene, {
+      map,
+      useMap: false,
+      color: Color3.Random(), // new Color3(colors[]),
+      opacity: 1,
+      resolution: new Vector2(engine.getRenderWidth(), engine.getRenderHeight()),
+      //   sizeAttenuation: true,
+      lineWidth: 6,
+      repeat: new Vector2(10, 1),
+      visibility: 1,
+    })
 
+    gl.material = material
+    materials.push(material)
 
-    function makeLine(name: string, points: Float32Array) {
-        const gl = new GreasedLine(name, scene, {
-            points
-        })
-        gl.material = material
-        return gl
-    }
+    return gl
+  }
 
-    function readSVG(): Promise<string> {
+  function readSVG(): Promise<string> {
+    return new Promise(function (resolve) {
+      const ajax = new XMLHttpRequest()
+      ajax.open('GET', 'assets/worldLow.svg', true)
+      ajax.send()
+      ajax.addEventListener('load', function (_) {
+          resolve(ajax.responseText)
+      })
+    })
+  }
 
-        return new Promise(function (resolve) {
-            var ajax = new XMLHttpRequest();
-            ajax.open("GET", "assets/worldLow.svg", true);
-            ajax.send();
-            ajax.addEventListener('load', function (e) {
-                resolve(ajax.responseText);
-            });
-        });
+  function drawSVG(source: string) {
+    const countries: Country[] = []
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(source, 'image/svg+xml')
 
-    }
+    let x: number, y: number, ox: number, oy: number, px: number, py: number
 
-    function drawSVG(source: string) {
+    const pathNodes = doc.querySelectorAll('path')
+    pathNodes.forEach((pathNode) => {
+      const path = pathNode.getAttribute('d')!
+      const parsed = SvgParser.parseSVG(path)
+      let pos: Country
 
-        var positions: Country[] = [];
-        var parser = new DOMParser();
-        var doc = parser.parseFromString(source, "image/svg+xml");
+      function addPos(x: number, y: number) {
+        pos.positions.push(x, y, 0)
+      }
 
+      parsed.forEach((segment) => {
+        if (segment.code === 'M') {
+          x = segment.x
+          y = segment.y
+          ox = x
+          oy = y
+          if (pos) {
+            countries.push(pos)
+          }
 
-        let x: number, y: number, ox: number, oy: number, px: number, py: number
+          pos = {
+            name: pathNode.id,
+            positions: [],
+          }
 
-        var pathNodes = doc.querySelectorAll('path');
-        pathNodes.forEach(pathNode => {
+          addPos(x, y)
+        } else if (segment.code === 'l') {
+          x = px + segment.x
+          y = py + segment.y
+          addPos(x, y)
+        } else if (segment.code === 'L') {
+          x = segment.x
+          y = segment.y
+          addPos(x, y)
+        } else if (segment.code === 'v') {
+          x = px
+          y = py + segment.y
+          addPos(x, y)
+        } else if (segment.code === 'h') {
+          x = px + segment.x
+          y = py
+          addPos(x, y)
+        } else if (segment.code === 'H') {
+          x = segment.x
+          y = py
+          addPos(x, y)
+        } else if (segment.code === 'V') {
+          x = px
+          y = segment.y
+          addPos(x, y)
+        } else if (segment.command === 'closepath') {
+          x = ox
+          y = oy
+          addPos(x, y)
+          countries.push(pos)
+        }
+        px = x
+        py = y
+      })
+    })
 
-            const path = pathNode.getAttribute("d")!
-            const parsed = SvgParser.parseSVG(path)
-            let pos: Country
+    const greasedLines: GreasedLine[] = []
+    // const float32Arrays: Float32Array[] = []
+    // countries.forEach(function (c) {
+    //     float32Arrays.push(new Float32Array(c.positions))
+    // })
+    // const greasedLine = makeLine("lajna", float32Arrays);
+    // greasedLines.push(greasedLine)
 
-            function addPos(x: number, y: number) {
-                pos.positions.push(x, y, 0)
-            }
+    const lineposAll: Vector3[][] = []
+    const ids = [...new Set(countries.map((p) => p.name))]
+    // const ids = ['RU']
 
-            parsed.forEach(segment => {
-                if (segment.code === 'M') {
+    ids.forEach((id) => {
+      const countryEntriesForCountry = countries.filter((c) => c.name === id)
+      const linepos: Vector3[][] = []
+      countryEntriesForCountry.forEach((ce) => {
+        const v: Vector3[] = []
+        for (let i = 0; i < ce.positions.length; i += 3) {
+          v.push(new Vector3(ce.positions[i], ce.positions[i + 1], ce.positions[i + 2]))
+        }
+        linepos.push(v)
+      })
+      lineposAll.push(...linepos)
+    })
 
-                    x = segment.x;
-                    y = segment.y;
-                    ox = x;
-                    oy = y;
-                    if (pos) {
-                        positions.push(pos)
-                    }
+    makeLine('world', lineposAll)
+    // const ids = [...new Set(positions.map(p => p.name))]
+    // ids.forEach(id => {
+    //     const greasedLinesFiltered = greasedLines.filter(b => b.name === id)
+    //     const merged = Mesh.MergeMeshes(greasedLinesFiltered)
+    //     if (merged) {
 
-                    pos = {
-                        name: pathNode.id,
-                        positions: []
-                    }
+    //         const material = new GreasedLineMaterial("line", scene, {
+    //             map,
+    //             useMap: true,
+    //             color: Color3.Random(),  // new Color3(colors[]),
+    //             opacity: 1,
+    //             resolution: new Vector2(engine.getRenderWidth(), engine.getRenderHeight()),
+    //             // sizeAttenuation: true,
+    //             lineWidth: 12,
+    //             repeat: new Vector2(10, 1),
+    //             visibility: 1
+    //         })
 
-                    addPos(x, y)
-                } else if (segment.code === "l") {
-                    x = px + segment.x
-                    y = py + segment.y;
-                    addPos(x, y)
-                } else if (segment.code === "L") {
-                    x = segment.x
-                    y = segment.y;
-                    addPos(x, y)
-                } else if (segment.code === "v") {
-                    x = px;
-                    y = py + segment.y;
-                    addPos(x, y)
-                } else if (segment.code === "h") {
-                    x = px + segment.x;
-                    y = py;
-                    addPos(x, y)
-                } else if (segment.code === "H") {
-                    x = segment.x;
-                    y = py;
-                    addPos(x, y)
-                } else if (segment.code === "V") {
-                    x = px;
-                    y = segment.y;
-                    addPos(x, y)
-                } else if (segment.command === 'closepath') {
-                    x = ox;
-                    y = oy;
-                    addPos(x, y)
-                    positions.push(pos)
-                }
-                px = x;
-                py = y;
-            })
+    //         merged.material = material
+    //     }
+    // })
 
+    // Mesh.MergeMeshes(greasedLines)
+  }
 
-        })
+  // onWindowResize();
 
-        const greasedLines: GreasedLine[] = []
-        positions.forEach(function (c) {
-            const greasedLine = makeLine(c.name, new Float32Array(c.positions));
-            greasedLines.push(greasedLine)
-        })
+  // function onWindowResize() {
 
-        // const ids = [...new Set( positions.map(p=>p.name))]
-        // ids.forEach(id => {
-        //     const greasedLinesFiltered = greasedLines.filter(b => b.name === id).map(b => b.mesh)
-        //     Mesh.MergeMeshes(greasedLinesFiltered)
-        // })
+  //     const w = container.clientWidth;
+  //     const h = container.clientHeight;
 
-        // Mesh.MergeMeshes(greasedLines)
+  //     camera.aspect = w / h;
+  //     camera.updateProjectionMatrix();
 
-    }
+  //     renderer.setSize(w, h);
 
+  //     resolution.set(w, h);
 
-    // onWindowResize();
+  // }
 
-    // function onWindowResize() {
-
-    //     var w = container.clientWidth;
-    //     var h = container.clientHeight;
-
-    //     camera.aspect = w / h;
-    //     camera.updateProjectionMatrix();
-
-    //     renderer.setSize(w, h);
-
-    //     resolution.set(w, h);
-
-    // }
-
-    // window.addEventListener('resize', onWindowResize);
-
+  // window.addEventListener('resize', onWindowResize);
 }

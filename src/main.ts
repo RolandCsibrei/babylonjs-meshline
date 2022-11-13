@@ -22,8 +22,7 @@ function createLights() {
   light.intensity = 0.3
 }
 
-function makeLine(points: Float32Array, color: Color3) {
-
+function makeLine(points: Float32Array | Vector3[] | Vector3[][], color: Color3) {
   const mat = new GreasedLineMaterial('meshline', scene, {
     useMap: false,
     color,
@@ -34,7 +33,7 @@ function makeLine(points: Float32Array, color: Color3) {
   })
   const ml = new GreasedLine('meshline', scene, {
     points,
-    widthCallback: (pw) => pw * 6,
+    // widthCallback: (pw) => pw * 6,
   })
   ml.material = mat
 }
@@ -81,13 +80,48 @@ function createLine() {
   makeLine(line, new Color3(1, 1, 0))
 }
 
+function test() {
+  const line = [
+    [
+      new Vector3(0, 0, 0),
+      new Vector3(100, 0, 0),
+      new Vector3(200, 100, 0),
+      new Vector3(300, 150, 0),
+      new Vector3(320, 180, 0),
+      new Vector3(320, 220, 0),
+      new Vector3(360, 280, 0),
+      new Vector3(360, 310, 0),
+    ],
+    [new Vector3(0, 30, 0), new Vector3(100, 30, 0)],
+    [new Vector3(0, 100, 0), new Vector3(100, 100, 0)],
+    [
+      new Vector3(0, 10, 20),
+      new Vector3(100, 20, 40),
+      new Vector3(200, 120, 20),
+      new Vector3(300, 160, 10),
+      // new Vector3(30, 60, 40),
+      new Vector3(300, 10, 10),
+      new Vector3(200, 60, 100),
+    ],
+    [new Vector3(0, 300, 0), new Vector3(100, 300, 0)],
+  ]
+  const line2 = [
+    new Vector3(0, 0, 0),
+    new Vector3(100, 0, 0),
+    new Vector3(200, 100, 0),
+    new Vector3(300, 150, 0),
+  ]
+  makeLine(line, Color3.Red())
+}
+
 /**
  * Main function that is run on startup
  */
 async function main() {
   createLights()
-  // createLine()
+  createLine()
   svgDemo(scene)
+  // test()
 
   await scene.debugLayer.show()
 

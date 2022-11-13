@@ -48,7 +48,8 @@ export const createArcRotateCamera = () => {
   const startAlpha = -Math.PI / 2
   const startBeta = -Math.PI / 2
   const startRadius = 1200
-  const startPosition = new Vector3(620,390, 0)
+  const startPosition = new Vector3(0, 0, 0)
+  // const startPosition = new Vector3(620,390, 0)
   const camera = new ArcRotateCamera('camera', startAlpha, startBeta, startRadius, startPosition, scene, true)
   camera.attachControl(canvas, false)
 
@@ -56,7 +57,7 @@ export const createArcRotateCamera = () => {
   camera.upperBetaLimit = 2*Math.PI
 
   camera.lowerRadiusLimit = 2 // how close can you zoom
-  camera.upperRadiusLimit = 1000 // how far out can you zoom
+  camera.upperRadiusLimit = 1500 // how far out can you zoom
   camera.minZ = 0.01
   camera.maxZ = 12000
 

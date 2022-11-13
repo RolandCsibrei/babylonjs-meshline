@@ -25,12 +25,12 @@ vec2 fix( vec4 i, float aspect ) {
 
     vec2 res = i.xy / i.w;
     res.x *= aspect;
-	 vCounters = counters;
     return res;
 
 }
 
 void main() {
+    vCounters = counters;
 
     float aspect = resolution.x / resolution.y;
 
