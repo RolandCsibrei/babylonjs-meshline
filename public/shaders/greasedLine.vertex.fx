@@ -1,11 +1,12 @@
  // THREE.ShaderChunk.logdepthbuf_pars_vertex,
       // THREE.ShaderChunk.fog_pars_vertex,
-     
+
 attribute vec3 previous;
 attribute vec3 next;
 attribute float side;
 attribute float width;
 attribute float counters;
+attribute float lineCounters;
 attribute vec2 uv;
 attribute vec3 position;
 
@@ -16,10 +17,12 @@ uniform float opacity;
 uniform float sizeAttenuation;
 uniform mat4 projection;
 uniform mat4 view;
+uniform mat4 worldViewProjection;
 
 varying vec2 vUV;
 varying vec4 vColor;
 varying float vCounters;
+varying float vLineCounters;
 
 vec2 fix( vec4 i, float aspect ) {
 
@@ -31,13 +34,15 @@ vec2 fix( vec4 i, float aspect ) {
 
 void main() {
     vCounters = counters;
+    vLineCounters = lineCounters;
 
     float aspect = resolution.x / resolution.y;
 
     vColor = vec4( color, opacity );
     vUV = uv;
 
-    mat4 m = projection * view;
+    // mat4 m = projection * view;
+    mat4 m = worldViewProjection;
     vec4 finalPosition = m * vec4( position, 1.0 );
     vec4 prevPos = m * vec4( previous, 1.0 );
     vec4 nextPos = m * vec4( next, 1.0 );
@@ -62,7 +67,6 @@ void main() {
 
     }
 
-    //vec2 normal = ( cross( vec3( dir, 0. ), vec3( 0., 0., 1. ) ) ).xy;
     vec4 normal = vec4( -dir.y, dir.x, 0., 1. );
     normal.xy *= .5 * w;
     normal *= projection;

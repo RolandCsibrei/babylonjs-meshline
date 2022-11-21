@@ -1,6 +1,7 @@
 'use strict'
-import { ArcRotateCamera, Color3, Material, Mesh, Scene, Texture, Vector2, Vector3 } from '@babylonjs/core'
-import { GreasedLine, GreasedLineMaterial } from './LineBuilder'
+import { ArcRotateCamera, Axis, Color3, Engine, Material, Mesh, RawTexture, Scene, Texture, Vector2, Vector3 } from '@babylonjs/core'
+import { GreasedLine } from './GreasedLine'
+import { GreasedLineMaterial } from './GreasedLineMaterial'
 import SvgParser from 'svg-path-parser'
 
 const colors = [
@@ -22,33 +23,46 @@ export function svgDemo(scene: Scene) {
   readSVG().then((s) => {
     drawSVG(s)
 
-    // const camera = scene.active@Camera as ArcRotateCamera
+    const camera = scene.activeCamera as ArcRotateCamera
 
     let v = 0
     const uvOffset = new Vector2(0, 0)
     scene.onBeforeRenderObservable.add(() => {
-      // materials.forEach(m => { m.setParameters({ visibility: v, uvOffset }) })
-      // v += scene.getAnimationRatio() * 0.001
-      // uvOffset.x += scene.getAnimationRatio() * 0.001
+      materials.forEach((m) => {
+        m.setParameters({
+          visibility: v,
+          // uvOffset
+
+        })
+      })
+      v += scene.getAnimationRatio() * 0.001
+      uvOffset.x += scene.getAnimationRatio() * 0.001
     })
 
-    // camera.target = new Vector3(620, 390, 0)
+    camera.position = new Vector3(200, 0, 0)
+    camera.target = new Vector3(200, 0, 0)
+    camera.radius = 1400
+    camera.beta = Math.PI * 1.5
   })
 
-  function makeLine(name: string, points: Float32Array | Float32Array[] | Vector3[][]) {
+  function makeLine(name: string, points: Float32Array | Float32Array[] | Vector3[][], colors: Texture) {
     const gl = new GreasedLine(name, scene, {
       points,
+    widthCallback: (pw) => pw * 0.2,
+
     })
 
     const material = new GreasedLineMaterial('line', scene, {
       map,
       useMap: false,
-      color: Color3.Random(), // new Color3(colors[]),
+      color: Color3.Black(), // new Color3(colors[]),
+      colors,
       opacity: 1,
       resolution: new Vector2(engine.getRenderWidth(), engine.getRenderHeight()),
-      //   sizeAttenuation: true,
-      lineWidth: 6,
+      sizeAttenuation: true,
+      lineWidth: 1,
       repeat: new Vector2(10, 1),
+      
       visibility: 1,
     })
 
@@ -64,7 +78,7 @@ export function svgDemo(scene: Scene) {
       ajax.open('GET', 'assets/worldLow.svg', true)
       ajax.send()
       ajax.addEventListener('load', function (_) {
-          resolve(ajax.responseText)
+        resolve(ajax.responseText)
       })
     })
   }
@@ -137,7 +151,7 @@ export function svgDemo(scene: Scene) {
       })
     })
 
-    const greasedLines: GreasedLine[] = []
+    // const greasedLines: GreasedLine[] = []
     // const float32Arrays: Float32Array[] = []
     // countries.forEach(function (c) {
     //     float32Arrays.push(new Float32Array(c.positions))
@@ -146,23 +160,61 @@ export function svgDemo(scene: Scene) {
     // greasedLines.push(greasedLine)
 
     const lineposAll: Vector3[][] = []
-    const ids = [...new Set(countries.map((p) => p.name))]
+    let ids = [...new Set(countries.map((p) => p.name))]
     // const ids = ['RU']
 
+    // const lineCount = gl.lineCount
+    let lineCounter = 0
     ids.forEach((id) => {
       const countryEntriesForCountry = countries.filter((c) => c.name === id)
-      const linepos: Vector3[][] = []
       countryEntriesForCountry.forEach((ce) => {
+        lineCounter += ce.positions.length
+      })
+    })
+
+    const colorArray = new Uint8Array(lineCounter - 1 * 3)
+
+    // ids = ['RU']
+
+    const colorList = [Color3.Blue(), Color3.Green(), Color3.Gray(), Color3.Red(), Color3.Black(), Color3.Yellow(), Color3.Random()]
+    lineCounter = 0
+    ids.forEach((id, idx) => {
+      const countryEntriesForCountry = countries.filter((c) => c.name === id)
+      const linepos: Vector3[][] = []
+      const color = Color3.Random() // colorList[idx % colorList.length]
+      console.log('Country', id, 'entries:', countryEntriesForCountry.length, 'color', color)
+      countryEntriesForCountry.forEach((ce, countryIdx) => {
         const v: Vector3[] = []
+        console.log('Positions:', ce.positions.length)
         for (let i = 0; i < ce.positions.length; i += 3) {
-          v.push(new Vector3(ce.positions[i], ce.positions[i + 1], ce.positions[i + 2]))
+          v.push(new Vector3(ce.positions[i], ce.positions[i + 1], ce.positions[i + 2] + idx))
+
+          colorArray[lineCounter] = color.r * 255
+          colorArray[lineCounter + 1] = color.g * 255
+          colorArray[lineCounter + 2] = color.b * 255
+          // const c = countryIdx / countryEntriesForCountry.length
+          // colorArray[lineCounter] = countryIdx * 255
+          // colorArray[lineCounter + 1] = countryIdx * 255
+          // colorArray[lineCounter + 2] = countryIdx * 255
+
+          lineCounter += 3
         }
         linepos.push(v)
       })
       lineposAll.push(...linepos)
     })
 
-    makeLine('world', lineposAll)
+    console.log(colorArray)
+
+    const colors = new RawTexture(colorArray, colorArray.length / 3, 1, Engine.TEXTUREFORMAT_RGB, scene)
+
+    const gl = makeLine('world', lineposAll, colors)
+
+    scene.onBeforeRenderObservable.add(() => {
+      // gl.position.x += 1
+      // gl.scaling.x -= 0.0001
+      gl.rotate(Axis.Y, 0.001)
+    })
     // const ids = [...new Set(positions.map(p => p.name))]
     // ids.forEach(id => {
     //     const greasedLinesFiltered = greasedLines.filter(b => b.name === id)

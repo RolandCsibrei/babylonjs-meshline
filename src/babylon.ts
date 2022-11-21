@@ -61,6 +61,8 @@ export const createArcRotateCamera = () => {
   camera.minZ = 0.01
   camera.maxZ = 12000
 
+  camera.panningSensibility = 1
+
 
   return camera
 }

@@ -1,6 +1,7 @@
 //   THREE.ShaderChunk.fog_pars_fragment,
 //   THREE.ShaderChunk.logdepthbuf_pars_fragment,
 
+uniform sampler2D colors;
 uniform sampler2D map;
 uniform sampler2D alphaMap;
 uniform float useMap;
@@ -17,6 +18,7 @@ uniform vec2 uvOffset;
 varying vec2 vUV;
 varying vec4 vColor;
 varying float vCounters;
+varying float vLineCounters;
 
 void main() {
 
@@ -30,6 +32,7 @@ void main() {
     if( useDash == 1. ){
         c.a *= ceil(mod(vCounters + dashOffset, dashArray) - (dashArray * dashRatio));
     }
+    c = texture2D(colors, vec2(vLineCounters,0.));
     gl_FragColor = c;
     gl_FragColor.a *= step(vCounters, visibility);
 
