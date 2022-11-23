@@ -2,16 +2,23 @@
  * @author roland@babylonjs.xyz
  */
 
-import { Vector3, Buffer, Mesh, VertexData, Scene } from '@babylonjs/core'
+import { Vector3, Buffer, Mesh, VertexData, Scene, Engine } from '@babylonjs/core'
 
-export type GreasedLinePoints = Vector3[] | Float32Array | Float32Array[] | Vector3[][]
+export interface Xyz {
+  x: number
+  y: number
+  z: number
+}
+
+export type GreasedLinePoints = Xyz[] | Float32Array | Float32Array[] | Xyz[][]
 
 export interface GreasedLineParameters {
   points: GreasedLinePoints
   widthCallback?: WidthCallback
+  colorPointers?: number[]
 }
 
-type WidthCallback = (pointIndex: number) => number
+type WidthCallback = (pointIndex: number) => number[]
 
 export class GreasedLine extends Mesh {
   private positions: number[]
@@ -23,7 +30,7 @@ export class GreasedLine extends Mesh {
   private indices: number[]
   private uvs: number[]
   private counters: number[]
-  private lineCounter: number[]
+  private colorPointers: number[]
   private _points: GreasedLinePoints
 
   // private _matrixWorld: Matrix
@@ -39,7 +46,7 @@ export class GreasedLine extends Mesh {
     this.side = []
     this.width = []
     this.counters = []
-    this.lineCounter = []
+    this.colorPointers = []
 
     this._points = new Float32Array()
     // this._geometry = null
@@ -58,7 +65,7 @@ export class GreasedLine extends Mesh {
 
   public get lineCount() {
     // return Math.ceil(this._points.length / 2)
-    return this.lineCounter.length
+    return this.colorPointers.length
   }
 
   public setPoints(points: GreasedLinePoints) {
@@ -105,24 +112,24 @@ export class GreasedLine extends Mesh {
       this.width.push(...width)
       this.side.push(...side)
     })
-    this.lineCounter = [...Array(pointCount*2)].map((_, i) => i / (pointCount*2-1))
+    this.colorPointers = this._parameters.colorPointers ?? [...Array(pointCount * 2)].map((_, i) => i / (pointCount * 2 - 1))
 
-    console.log(this.lineCounter)
+    console.log(this.colorPointers)
     this._drawLine()
   }
 
   private static _Convert(points: GreasedLinePoints): number[][] {
-    if (points.length && points[0] instanceof Vector3) {
+    if (points.length && !Array.isArray(points[0]) && (points[0] as any).x !== undefined) {
       const positions: number[] = []
       for (let j = 0; j < points.length; j++) {
-        let p = points[j] as Vector3
+        let p = points[j] as Xyz
         let c = j / points.length
         positions.push(p.x, p.y, p.z)
       }
       return [positions]
-    } else if (points.length > 0 && Array.isArray(points[0]) && points[0].length > 0 && points[0][0] instanceof Vector3) {
+    } else if (points.length > 0 && Array.isArray(points[0]) && points[0].length > 0) {
       const positions: number[][] = []
-      const vectorPoints = points as Vector3[][]
+      const vectorPoints = points as Xyz[][]
       vectorPoints.forEach((p) => {
         positions.push(p.flatMap((p2) => [p2.x, p2.y, p2.z]))
       })
@@ -162,13 +169,13 @@ export class GreasedLine extends Mesh {
     this.width = []
     this.indices = []
     this.uvs = []
-    this.lineCounter = []
+    this.colorPointers = []
   }
 
   public preprocess(positions: number[]) {
     const l = positions.length / 6
 
-    let w: number
+    let wUp: number, wDown: number
     let v: number[] = []
 
     const previous = []
@@ -194,13 +201,14 @@ export class GreasedLine extends Mesh {
       // widths
       // if (this._parameters.widthCallback) w = this._parameters.widthCallback(j / (l - 1))
       if (this._parameters.widthCallback) {
-        w = this._parameters.widthCallback(j)
+        ;[wUp, wDown] = this._parameters.widthCallback(j)
       } else {
-        w = 1
+        wUp = 1
+        wDown = 1
       }
 
-      width.push(w)
-      width.push(w)
+      width.push(wUp)
+      width.push(wDown)
 
       // uvs
       uvs.push(j / (l - 1), 0)
@@ -264,8 +272,13 @@ export class GreasedLine extends Mesh {
     const countersBuffer = new Buffer(engine, this.counters, false, 1)
     this.setVerticesBuffer(countersBuffer.createVertexBuffer('counters', 0, 1))
 
-    const lineCounterBuffer = new Buffer(engine, this.lineCounter, false, 1)
-    this.setVerticesBuffer(lineCounterBuffer.createVertexBuffer('lineCounters', 0, 1))
+    const colorPointersBuffer = new Buffer(engine, this.colorPointers, true, 1)
+    this.setVerticesBuffer(colorPointersBuffer.createVertexBuffer('colorPointers', 0, 1))
+    this._colorPointersBuffer = colorPointersBuffer
+  }
 
+  private _colorPointersBuffer?: Buffer
+  public setColorPointers(cp: number[], engine: Engine) {
+    this._colorPointersBuffer!.update(cp)
   }
 }

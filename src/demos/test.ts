@@ -1,29 +1,9 @@
-import { HemisphericLight, Vector3, Color3, Vector2, Buffer, Mesh, RawTexture, Engine } from '@babylonjs/core'
-import { createEngine, createScene, createPBRSkybox, createArcRotateCamera } from './babylon'
-import '@babylonjs/loaders/glTF/2.0'
+import { Color3, Engine, RawTexture, Scene, Vector2, Vector3 } from '@babylonjs/core'
+import { GreasedLineMaterial } from './../GreasedLineMaterial'
+import { GreasedLine } from './../GreasedLine'
 
-import '@babylonjs/core/Debug/debugLayer'
-import '@babylonjs/inspector'
-
-import './style.css'
-import { MeshLineBuilder } from './MeshLine'
-import { svgDemo } from './svg'
-import { GreasedLine } from './GreasedLine'
-import { GreasedLineMaterial } from './GreasedLineMaterial'
-
-const canvas: HTMLCanvasElement = document.getElementById('app') as HTMLCanvasElement
-const engine = createEngine(canvas)
-const scene = createScene()
-
-// createPBRSkybox()
-createArcRotateCamera()
-
-function createLights() {
-  const light = new HemisphericLight('light', Vector3.Zero(), scene)
-  light.intensity = 0.3
-}
-
-function makeLine(points: Float32Array | Vector3[] | Vector3[][], color: Color3) {
+function makeLine(scene: Scene, points: Float32Array | Vector3[] | Vector3[][], color: Color3) {
+  const engine = scene.getEngine()
   const mat = new GreasedLineMaterial('meshline', scene, {
     useMap: false,
     color,
@@ -34,19 +14,19 @@ function makeLine(points: Float32Array | Vector3[] | Vector3[][], color: Color3)
   })
   const ml = new GreasedLine('meshline', scene, {
     points,
-    widthCallback: (pw) => pw * 6,
+    // widthCallback: (pw) => pw * 6,
   })
   ml.material = mat
 }
 
-function createLine() {
+function test(scene: Scene) {
   let line = new Float32Array(600)
   for (var j = 0; j < 200 * 3; j += 3) {
     line[j] = -30 + 0.1 * j
     line[j + 1] = 5 * Math.sin(0.01 * j)
     line[j + 2] = -20
   }
-  makeLine(line, new Color3(1, 0, 0))
+  makeLine(scene, line, new Color3(1, 0, 0))
 
   line = new Float32Array(600)
   for (var j = 0; j < 200 * 3; j += 3) {
@@ -54,7 +34,7 @@ function createLine() {
     line[j + 1] = 5 * Math.cos(0.02 * j)
     line[j + 2] = -10
   }
-  makeLine(line, new Color3(0, 1, 0))
+  makeLine(scene, line, new Color3(0, 1, 0))
 
   line = new Float32Array(600)
   for (var j = 0; j < 200 * 3; j += 3) {
@@ -62,7 +42,7 @@ function createLine() {
     line[j + 1] = 5 * Math.sin(0.01 * j) * Math.cos(0.005 * j)
     line[j + 2] = 0
   }
-  makeLine(line, new Color3(0, 0, 1))
+  makeLine(scene, line, new Color3(0, 0, 1))
 
   line = new Float32Array(600)
   for (var j = 0; j < 200 * 3; j += 3) {
@@ -70,7 +50,7 @@ function createLine() {
     line[j + 1] = 0.02 * j + 5 * Math.sin(0.01 * j) * Math.cos(0.005 * j)
     line[j + 2] = 10
   }
-  makeLine(line, new Color3(1, 0, 1))
+  makeLine(scene, line, new Color3(1, 0, 1))
 
   line = new Float32Array(600)
   for (var j = 0; j < 200 * 3; j += 3) {
@@ -78,22 +58,24 @@ function createLine() {
     line[j + 1] = Math.exp(0.005 * j)
     line[j + 2] = 20
   }
-  makeLine(line, new Color3(1, 1, 0))
+  makeLine(scene, line, new Color3(1, 1, 0))
 }
 
-function test2() {
+function test2(scene: Scene) {
+  const engine = scene.getEngine()
+
   const colorList = [Color3.Red(), Color3.Yellow(), Color3.Green(), Color3.Blue()]
 
   const line2 = [new Vector3(0, 0, 0), new Vector3(100, 0, 0), new Vector3(200, 100, 0), new Vector3(300, 150, 0)]
 
-  const lineCounter = Math.floor(line2.length -1)
-  const colorArray = new Uint8Array(lineCounter * 3)
-  for (let i = 0; i < lineCounter; i++) {
-    colorArray[i * 3] = colorList[i].r*255
-    colorArray[i * 3 + 1] = colorList[i].g*255
-    colorArray[i * 3 + 2] = colorList[i].b*255
+  const colorPointer = Math.floor(line2.length - 1)
+  const colorArray = new Uint8Array(colorPointer * 3)
+  for (let i = 0; i < colorPointer; i++) {
+    colorArray[i * 3] = colorList[i].r * 255
+    colorArray[i * 3 + 1] = colorList[i].g * 255
+    colorArray[i * 3 + 2] = colorList[i].b * 255
   }
-  const colors = new RawTexture(colorArray, lineCounter, 1, Engine.TEXTUREFORMAT_RGB, scene)
+  const colors = new RawTexture(colorArray, colorPointer, 1, Engine.TEXTUREFORMAT_RGB, scene)
 
   const mat = new GreasedLineMaterial('meshline', scene, {
     useMap: false,
@@ -112,7 +94,7 @@ function test2() {
   })
   ml.material = mat
 }
-function test() {
+function test3(scene: Scene) {
   const line = [
     [
       new Vector3(0, 0, 0),
@@ -138,25 +120,5 @@ function test() {
     [new Vector3(0, 300, 0), new Vector3(100, 300, 0)],
   ]
   const line2 = [new Vector3(0, 0, 0), new Vector3(100, 0, 0), new Vector3(200, 100, 0), new Vector3(300, 150, 0)]
-  makeLine(line, Color3.Red())
+  makeLine(scene, line, Color3.Red())
 }
-
-/**
- * Main function that is run on startup
- */
-async function main() {
-  createLights()
-  // createLine()
-  // svgDemo(scene)
-  // test()
-  test2()
-
-  await scene.debugLayer.show()
-
-  // Start the scene
-  engine.runRenderLoop(() => {
-    scene.render()
-  })
-}
-
-main().catch((error) => console.error(error))

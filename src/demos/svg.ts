@@ -1,7 +1,7 @@
 'use strict'
 import { ArcRotateCamera, Axis, Color3, Engine, Material, Mesh, RawTexture, Scene, Texture, Vector2, Vector3 } from '@babylonjs/core'
-import { GreasedLine } from './GreasedLine'
-import { GreasedLineMaterial } from './GreasedLineMaterial'
+import { GreasedLine } from '../GreasedLine'
+import { GreasedLineMaterial } from '../GreasedLineMaterial'
 import SvgParser from 'svg-path-parser'
 
 const colors = [
@@ -48,7 +48,7 @@ export function svgDemo(scene: Scene) {
   function makeLine(name: string, points: Float32Array | Float32Array[] | Vector3[][], colors: Texture) {
     const gl = new GreasedLine(name, scene, {
       points,
-    widthCallback: (pw) => pw * 0.2,
+    // widthCallback: (pw) => pw * 0.2,
 
     })
 
@@ -56,6 +56,7 @@ export function svgDemo(scene: Scene) {
       map,
       useMap: false,
       color: Color3.Black(), // new Color3(colors[]),
+      useColors: true,
       colors,
       opacity: 1,
       resolution: new Vector2(engine.getRenderWidth(), engine.getRenderHeight()),
@@ -187,7 +188,7 @@ export function svgDemo(scene: Scene) {
         const v: Vector3[] = []
         console.log('Positions:', ce.positions.length)
         for (let i = 0; i < ce.positions.length; i += 3) {
-          v.push(new Vector3(ce.positions[i], ce.positions[i + 1], ce.positions[i + 2] + idx))
+          v.push(new Vector3(ce.positions[i], ce.positions[i + 1], ce.positions[i + 2]))
 
           colorArray[lineCounter] = color.r * 255
           colorArray[lineCounter + 1] = color.g * 255

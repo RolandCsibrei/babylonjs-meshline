@@ -1,4 +1,4 @@
-import { Engine, Scene, ArcRotateCamera, Vector3, CubeTexture, Color4, ImageProcessingConfiguration } from '@babylonjs/core'
+import { Engine, Scene, ArcRotateCamera, Vector3, CubeTexture, Color4, ImageProcessingConfiguration, AxesViewer } from '@babylonjs/core'
 
 export let canvas: HTMLCanvasElement
 export let engine: Engine
@@ -20,10 +20,10 @@ export const createScene = () => {
   scene = new Scene(engine)
 
   scene.clearColor = new Color4(1, 1, 1, 1)
+  scene.autoClear = true
+  scene.autoClearDepthAndStencil = true
 
   // optimize scene for opaque background
-  // scene.autoClear = false
-  // scene.autoClearDepthAndStencil = false
 
   // setup ACES tone mapping for more natural colors
   // scene.imageProcessingConfiguration.toneMappingEnabled = true
@@ -31,15 +31,18 @@ export const createScene = () => {
 
   // show the inspector when pressing shift + alt + I
   // install @babylonjs/inspector and import here
-  // scene.onKeyboardObservable.add(({ event }) => {
-  //   if (event.ctrlKey && event.shiftKey && event.code === 'KeyI') {
-  //     if (scene.debugLayer.isVisible()) {
-  //       scene.debugLayer.hide()
-  //     } else {
-  //       scene.debugLayer.show()
-  //     }
-  //   }
-  // })
+  let axesViewer:AxesViewer
+  scene.onKeyboardObservable.add(({ event }) => {
+    if (event.ctrlKey && event.shiftKey && event.code === 'KeyI') {
+      if (scene.debugLayer.isVisible()) {
+        scene.debugLayer.hide()
+        axesViewer?.dispose()
+      } else {
+        scene.debugLayer.show()
+        axesViewer = new AxesViewer(scene, 2)
+      }
+    }
+  })
 
   return scene
 }
@@ -61,7 +64,7 @@ export const createArcRotateCamera = () => {
   camera.minZ = 0.01
   camera.maxZ = 12000
 
-  camera.panningSensibility = 1
+  camera.panningSensibility = 10
 
 
   return camera

@@ -1,20 +1,22 @@
+import { Color4 } from '@babylonjs/core'
 /**
  * @author roland@babylonjs.xyz
  */
 
-import {
-  ShaderMaterial,
-  Scene,
-  Color3,
-  Vector2,
-  Texture
-} from '@babylonjs/core';
+import { ShaderMaterial, Scene, Color3, Vector2, Texture, RawTexture, Engine } from '@babylonjs/core'
+
+export interface Rgb {
+  r: number
+  g: number
+  b: number
+}
 
 export interface GreasedLineMaterialParameters {
   lineWidth?: number
-  colors?: Texture
+  colors?: Texture | number[]
   map?: Texture
   alphaMap?: Texture
+  useColors?: boolean
   useMap?: boolean
   useAlphaMap?: boolean
   color?: Color3
@@ -32,10 +34,10 @@ export interface GreasedLineMaterialParameters {
 }
 
 export class GreasedLineMaterial extends ShaderMaterial {
-  private _parameters: GreasedLineMaterialParameters;
+  private _parameters: GreasedLineMaterialParameters
 
   private static _bton(bool?: boolean) {
-    return bool ? 1 : 0;
+    return bool ? 1 : 0
   }
   constructor(name: string, scene: Scene, parameters: GreasedLineMaterialParameters) {
     super(
@@ -46,7 +48,7 @@ export class GreasedLineMaterial extends ShaderMaterial {
         fragment: './shaders/greasedLine',
       },
       {
-        attributes: ['uv', 'position', 'normal', 'previous', 'next', 'side', 'width', 'counters','lineCounters'],
+        attributes: ['uv', 'position', 'normal', 'previous', 'next', 'side', 'width', 'counters', 'colorPointers'],
         uniforms: [
           'coordinates',
           'world',
@@ -55,6 +57,7 @@ export class GreasedLineMaterial extends ShaderMaterial {
           'view',
           'projection',
           'colors',
+          'useColors',
           'lineWidth',
           'map',
           'useMap',
@@ -73,47 +76,61 @@ export class GreasedLineMaterial extends ShaderMaterial {
           'repeat',
           'uvOffset',
         ],
-      }
-    );
+      },
+    )
 
-    this._parameters = {};
-    this.setParameters(parameters);
+    this._parameters = {}
+    this.setParameters(parameters)
   }
 
   public setParameters(parameters: GreasedLineMaterialParameters) {
-    this._parameters = { ...this._parameters, ...parameters };
+    this._parameters = { ...this._parameters, ...parameters }
 
-    this.setFloat('lineWidth', this._parameters.lineWidth ?? 1);
+    this.setFloat('lineWidth', this._parameters.lineWidth ?? 1)
 
     if (this._parameters.colors) {
-      this.setTexture('colors', this._parameters.colors);
+      if (this._parameters.colors instanceof Texture) {
+        this.setTexture('colors', this._parameters.colors)
+      } else {
+        const colors = new RawTexture(
+          new Uint8Array(this._parameters.colors),
+          this._parameters.colors.length / 3,
+          1,
+          Engine.TEXTUREFORMAT_RGB,
+          this.getScene(),
+        )
+        colors.name = "greased-line-colors"
+        this.setTexture('colors', colors)
+
+      }
     }
 
     if (this._parameters.alphaMap) {
-      this.setTexture('alphaMap', this._parameters.alphaMap);
+      this.setTexture('alphaMap', this._parameters.alphaMap)
     }
 
     if (this._parameters.map) {
-      this.setTexture('map', this._parameters.map);
+      this.setTexture('map', this._parameters.map)
     }
 
-    this.setFloat('useMap', GreasedLineMaterial._bton(this._parameters.useMap));
-    this.setFloat('useAlphaMap', GreasedLineMaterial._bton(this._parameters.useAlphaMap));
-    this.setColor3('color', this._parameters.color ?? Color3.White());
-    this.setFloat('opacity', this._parameters.opacity ?? 1);
-    this.setVector2('resolution', this._parameters.resolution ?? new Vector2(1, 1));
-    this.setFloat('sizeAttenuation', GreasedLineMaterial._bton(this._parameters.sizeAttenuation));
-    this.setFloat('dashArray', this._parameters.dashArray ?? 0);
-    this.setFloat('dashOffset', this._parameters.dashOffset ?? 0);
-    this.setFloat('dashRatio', this._parameters.dashRatio ?? 0.5);
-    this.setFloat('useDash', GreasedLineMaterial._bton(this._parameters.useDash));
-    this.setFloat('visibility', this._parameters.visibility ?? 1);
-    this.setFloat('alphaTest', this._parameters.alphaTest ?? 0);
-    this.setVector2('repeat', this._parameters.repeat ?? new Vector2(1, 1));
-    this.setVector2('uvOffset', this._parameters.uvOffset ?? new Vector2(0, 0));
+    this.setFloat('useColors', GreasedLineMaterial._bton(this._parameters.useColors))
+    this.setFloat('useMap', GreasedLineMaterial._bton(this._parameters.useMap))
+    this.setFloat('useAlphaMap', GreasedLineMaterial._bton(this._parameters.useAlphaMap))
+    this.setColor3('color', this._parameters.color ?? Color3.White())
+    this.setFloat('opacity', this._parameters.opacity ?? 1)
+    this.setVector2('resolution', this._parameters.resolution ?? new Vector2(1, 1))
+    this.setFloat('sizeAttenuation', GreasedLineMaterial._bton(this._parameters.sizeAttenuation))
+    this.setFloat('dashArray', this._parameters.dashArray ?? 0)
+    this.setFloat('dashOffset', this._parameters.dashOffset ?? 0)
+    this.setFloat('dashRatio', this._parameters.dashRatio ?? 0.5)
+    this.setFloat('useDash', GreasedLineMaterial._bton(this._parameters.useDash))
+    this.setFloat('visibility', this._parameters.visibility ?? 1)
+    this.setFloat('alphaTest', this._parameters.alphaTest ?? 0)
+    this.setVector2('repeat', this._parameters.repeat ?? new Vector2(1, 1))
+    this.setVector2('uvOffset', this._parameters.uvOffset ?? new Vector2(0, 0))
   }
 
   public getParameters() {
-    return { ...this._parameters };
+    return { ...this._parameters }
   }
 }

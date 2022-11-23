@@ -6,7 +6,7 @@ attribute vec3 next;
 attribute float side;
 attribute float width;
 attribute float counters;
-attribute float lineCounters;
+attribute float colorPointers;
 attribute vec2 uv;
 attribute vec3 position;
 
@@ -22,7 +22,7 @@ uniform mat4 worldViewProjection;
 varying vec2 vUV;
 varying vec4 vColor;
 varying float vCounters;
-varying float vLineCounters;
+varying float vColorPointers;
 
 vec2 fix( vec4 i, float aspect ) {
 
@@ -34,7 +34,7 @@ vec2 fix( vec4 i, float aspect ) {
 
 void main() {
     vCounters = counters;
-    vLineCounters = lineCounters;
+    vColorPointers = colorPointers;
 
     float aspect = resolution.x / resolution.y;
 

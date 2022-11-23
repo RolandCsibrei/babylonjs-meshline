@@ -4,6 +4,7 @@
 uniform sampler2D colors;
 uniform sampler2D map;
 uniform sampler2D alphaMap;
+uniform float useColors;
 uniform float useMap;
 uniform float useAlphaMap;
 uniform float useDash;
@@ -18,7 +19,7 @@ uniform vec2 uvOffset;
 varying vec2 vUV;
 varying vec4 vColor;
 varying float vCounters;
-varying float vLineCounters;
+varying float vColorPointers;
 
 void main() {
 
@@ -32,7 +33,9 @@ void main() {
     if( useDash == 1. ){
         c.a *= ceil(mod(vCounters + dashOffset, dashArray) - (dashArray * dashRatio));
     }
-    c = texture2D(colors, vec2(vLineCounters,0.));
+    if (useColors == 1.) {
+        c = texture2D(colors, vec2(vColorPointers,0.));
+    } 
     gl_FragColor = c;
     gl_FragColor.a *= step(vCounters, visibility);
 
