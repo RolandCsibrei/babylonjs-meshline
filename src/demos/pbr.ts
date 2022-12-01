@@ -1,16 +1,17 @@
 import { PBRCustomMaterial } from '@babylonjs/materials'
 import { GreasedLine, GreasedLinePoints } from './../GreasedLine'
-import { ArcRotateCamera, Color3, Color4, GlowLayer, Scene, Vector2, Vector3 } from '@babylonjs/core'
+import { ArcRotateCamera, Axis, BezierCurve, Color3, Color4, GlowLayer, Scene, Vector2, Vector3 } from '@babylonjs/core'
 import { Xyz } from '../GreasedLine'
 import { GreasedLinePBRMaterial } from '../GreasedLinePBRMaterial'
+import { bezier, circle } from '../lineUtils'
 
 export function pbrDemo(scene: Scene, camera: ArcRotateCamera) {
   const engine = scene.getEngine()
 
   camera.target = new Vector3(0, 0, 0)
-  camera.alpha = 0
-  camera.beta = 0
-  camera.radius = 40
+  camera.alpha = -Math.PI / 2
+  camera.beta = Math.PI / 2
+  camera.radius = 58.85
   camera.upperRadiusLimit = 300
   camera.minZ = 0.01
 
@@ -22,7 +23,7 @@ export function pbrDemo(scene: Scene, camera: ArcRotateCamera) {
 
   const gl = new GlowLayer('glow', scene, {
     camera,
-    blurKernelSize: 128
+    blurKernelSize: 128,
   })
   gl.intensity = 1
 
@@ -67,10 +68,35 @@ export function pbrDemo(scene: Scene, camera: ArcRotateCamera) {
   }
 
   function getPoints() {
-    const points = [
-      { x: 0, y: 0, z: 0 },
+    const linePoints = [
+      { x: 0, y: 0, z: 10 },
       { x: 10, y: 10, z: 0 },
     ]
+    const circlePoints = circle(20, 4)
+
+    const bezierPoints = bezier(
+      {
+        x: -20,
+        y: -20,
+        z: 0,
+      },
+      {
+        x: 0,
+        y: 0,
+        z: 0,
+      },
+      {
+        x: 20,
+        y: -20,
+        z: 0,
+      },
+      20,
+    )
+
+    const points: Xyz[][] = []
+    points.push(linePoints)
+    points.push(circlePoints)
+    points.push(bezierPoints)
     return points
   }
 }

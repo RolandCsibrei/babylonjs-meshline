@@ -1,4 +1,6 @@
-import { Color3, Engine, RawTexture, Scene, Vector2, Vector3 } from '@babylonjs/core'
+import { scene } from './babylon';
+import { GreasedLineBuilder } from './../LineBuilder'
+import { Color3, Engine, RawTexture, Scene, Vector2, Vector3, VertexBuffer } from '@babylonjs/core'
 import { GreasedLineMaterial } from './../GreasedLineMaterial'
 import { GreasedLine } from './../GreasedLine'
 
@@ -19,7 +21,7 @@ function makeLine(scene: Scene, points: Float32Array | Vector3[] | Vector3[][], 
   ml.material = mat
 }
 
-function test(scene: Scene) {
+export function test(scene: Scene) {
   let line = new Float32Array(600)
   for (var j = 0; j < 200 * 3; j += 3) {
     line[j] = -30 + 0.1 * j
@@ -61,40 +63,137 @@ function test(scene: Scene) {
   makeLine(scene, line, new Color3(1, 1, 0))
 }
 
-function test2(scene: Scene) {
+export function test2(scene: Scene) {
   const engine = scene.getEngine()
 
-  const colorList = [Color3.Red(), Color3.Yellow(), Color3.Green(), Color3.Blue()]
+  const colorList = [
+    Color3.Red(),
+    Color3.Yellow(),
+    Color3.Green(),
+    Color3.Blue(),
 
-  const line2 = [new Vector3(0, 0, 0), new Vector3(100, 0, 0), new Vector3(200, 100, 0), new Vector3(300, 150, 0)]
+    Color3.Black(),
+    Color3.Red(),
+    Color3.Black(),
+    Color3.Red(),
+  ]
 
-  const colorPointer = Math.floor(line2.length - 1)
-  const colorArray = new Uint8Array(colorPointer * 3)
-  for (let i = 0; i < colorPointer; i++) {
-    colorArray[i * 3] = colorList[i].r * 255
-    colorArray[i * 3 + 1] = colorList[i].g * 255
-    colorArray[i * 3 + 2] = colorList[i].b * 255
-  }
-  const colors = new RawTexture(colorArray, colorPointer, 1, Engine.TEXTUREFORMAT_RGB, scene)
+  const line2 = [
+    new Vector3(0, 0, 0),
+    new Vector3(100, 0, 0),
+    new Vector3(200, 100, 0),
+    // new Vector3(300, 150, 0),
+    // new Vector3(300,200, 0)
+  ]
+  const line3 = [
+    new Vector3(0, 100, 0),
+    new Vector3(100, 100, 0),
+    new Vector3(100, 140, 0),
+    new Vector3(150, 140, 0),
+    // new Vector3(200, 100, 0),
+    // new Vector3(300, 150, 0),
+    // new Vector3(300,200, 0)
+  ]
+  const line4 = [
+    new Vector3(0, 0, 0),
+    new Vector3(0, 100, 0),
+    // new Vector3(200, 100, 0),
+    // new Vector3(300, 150, 0),
+    // new Vector3(300,200, 0)
+  ]
+  // const line2 = [new Vector3(0, 0, 0), new Vector3(100, 0, 0), new Vector3(200, 100, 0), new Vector3(300, 150, 0), new Vector3(300,200, 0)]
+  // const line3 = [new Vector3(50, 50, 100), new Vector3(150, 50, 100), new Vector3(250, 150, 100), new Vector3(350, 200, 100), new Vector3(350,250, 100)]
+
+  // const colorPointerCount = colorList.length; //s Math.floor(line2.length - 1 + line3.length - 1)
+  // const colorArray = new Uint8Array(colorPointerCount * 3)
+  // for (let i = 0; i < colorPointerCount; i++) {
+  //   colorArray[i * 3] = colorList[i].r * 255
+  //   colorArray[i * 3 + 1] = colorList[i].g * 255
+  //   colorArray[i * 3 + 2] = colorList[i].b * 255
+  // }
+
+  const cs = [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+
+    255,
+    0,
+    0, // 2
+    255,
+    0,
+    0, // 3
+    255,
+    255,
+    0, // 5
+    255,
+    255,
+    0, // 6
+
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+
+    255,
+    0,
+    0, // 3
+    255,
+    0,
+    0, // 3
+    255,
+    255,
+    0, // 5
+    255,
+    255,
+    0, // 6
+    0,
+    0,
+    255,
+    0,
+    0,
+    255,
+
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+
+    0,
+    255,
+    0,
+    0,
+    255,
+    0,
+  ]
 
   const mat = new GreasedLineMaterial('meshline', scene, {
     useMap: false,
-    color: Color3.Black(),
+    color: Color3.Blue(),
     opacity: 1,
     resolution: new Vector2(engine.getRenderWidth(), engine.getRenderHeight()),
     sizeAttenuation: false,
-    lineWidth: 140,
-    colors,
+    lineWidth: 14,
+    colors: cs,
+    useColors: true,
   })
 
-  const points = line2
+  const points = [line2, line3, line4]
   const ml = new GreasedLine('meshline', scene, {
     points,
     // widthCallback: (pw) => pw * 6,
   })
   ml.material = mat
 }
-function test3(scene: Scene) {
+
+export function test3(scene: Scene) {
   const line = [
     [
       new Vector3(0, 0, 0),
@@ -121,4 +220,47 @@ function test3(scene: Scene) {
   ]
   const line2 = [new Vector3(0, 0, 0), new Vector3(100, 0, 0), new Vector3(200, 100, 0), new Vector3(300, 150, 0)]
   makeLine(scene, line, Color3.Red())
+}
+
+export function testLineBuilder(scene: Scene) {
+  const line1 = [new Vector3(0, 0, 0), new Vector3(100, 0, 0), new Vector3(100, 100, 0), new Vector3(200, 100, 0), new Vector3(200, 200, 0)]
+  const line2 = [new Vector3(0, 0, 100), new Vector3(100, 0, 100), new Vector3(100, 100, 100), new Vector3(200, 100, 100), new Vector3(200, 200, 100)]
+
+  const colors1 = [new Color3(0, 0, 0), new Color3(1, 0, 0), new Color3(0, 0, 0), new Color3(1, 0, 0)]
+  const colors2 = [new Color3(0, 1, 0), new Color3(0, 0, 1), new Color3(0, 1, 0), new Color3(0, 0, 1)]
+
+  const builder = new GreasedLineBuilder(scene)
+  builder.addLine(line1, colors1)
+  builder.addLine(line2, colors2)
+  
+  const offsets = []
+  for(let i=0;i<line1.length+line2.length;i++) {
+    offsets.push(100,0,1)
+    offsets.push(100,0,1)
+  }
+  
+  const mesh = builder.build({
+    offsets
+  })
+
+  let x = 0
+  scene.onBeforeRenderObservable.add(() => {
+    const offsets:number[] = []
+    for(let i=0;i<line1.length+line2.length;i++) {
+      offsets.push(x,0,0)
+      offsets.push(x,0,0)
+    }
+    x+=1
+    mesh.setOffsets(offsets)
+    // const verticesArray = mesh.getVerticesData(VertexBuffer.PositionKind)
+    // mesh.updateMeshPositions(verticesArray => {
+    //   console.log("Update", verticesArray.length)
+    //   verticesArray?.forEach((v,idx) => {
+    //     if (idx%3 ===0) {
+
+    //       verticesArray[idx] = v + 0.1
+    //     }
+    //   })
+    // })
+  })
 }

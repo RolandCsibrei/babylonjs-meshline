@@ -1,4 +1,4 @@
-import { Xyz } from './GreasedLine';
+import { Xyz } from './GreasedLine'
 import { Vector3 } from '@babylonjs/core'
 
 interface SubLine {
@@ -77,9 +77,43 @@ export function segmentize(what: Vector3[] | SubLine[], segmentLength: number): 
 
 export function xyzToVector3(xyz: Xyz | Xyz[]) {
   if (Array.isArray(xyz)) {
-    const vectors =  xyz.map(pos => new Vector3(pos.x, pos.y, pos.z))
+    const vectors = xyz.map((pos) => new Vector3(pos.x, pos.y, pos.z))
     return vectors
   }
 
   return new Vector3(xyz.x, xyz.y, xyz.z)
+}
+
+export function circle(radius: number, segments: number, z = 0) {
+  const points: Xyz[] = []
+  for (let i = 0; i < (Math.PI * 2) / (segments / 360); i++) {
+    points.push({
+      x: Math.cos(i) * radius,
+      y: Math.sin(i) * radius,
+      z,
+    })
+  }
+  return points
+}
+
+export function bezier(p0: Xyz, p1: Xyz, p2: Xyz, segments: number) {
+  const points: Xyz[] = []
+
+  for (let i = 0; i < segments; i++) {
+    const point = getBezierPoint(i / segments, p0, p1, p2)
+    points.push(point)
+  }
+  
+  return points
+}
+
+function getBezierPoint(percent: number, p0: Xyz, p1: Xyz, p2: Xyz) {
+  const a0 = (1 - percent) ** 2,
+    a1 = 2 * percent * (1 - percent),
+    a2 = percent ** 2
+  return {
+    x: a0 * p0.x + a1 * p1.x + a2 * p2.x,
+    y: a0 * p0.y + a1 * p1.y + a2 * p2.y,
+    z: a0 * p0.z + a1 * p1.z + a2 * p2.z,
+  }
 }

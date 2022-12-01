@@ -9,9 +9,11 @@ import './style.css'
 import { svgDemo } from './svg'
 import { GreasedLine } from '../GreasedLine'
 import { GreasedLineMaterial } from '../GreasedLineMaterial'
+import { test, test2, test3, testLineBuilder } from './test'
 import { boxDemo } from './box'
 import { pbrDemo } from './pbr'
 import { boxDemo2 } from './box2'
+import { spectrumAnalyzer } from './spectrumAnalyzer'
 
 const canvas: HTMLCanvasElement = document.getElementById('app') as HTMLCanvasElement
 const engine = createEngine(canvas)
@@ -32,14 +34,15 @@ function createLights() {
  */
 async function main() {
   createLights()
-  // createLine()
+  
+  spectrumAnalyzer(scene, camera)
+  // testLineBuilder(scene)
+  // test2(scene)
   // svgDemo(scene)
-  // test()
-  // test2()
-  boxDemo2(scene, camera)
+  // boxDemo(scene, camera)
+  // boxDemo2(scene, camera)
   // pbrDemo(scene, camera)
 
-  // Start the scene
   engine.runRenderLoop(() => {
     scene.render()
   })

@@ -1,12 +1,13 @@
  // THREE.ShaderChunk.logdepthbuf_pars_vertex,
       // THREE.ShaderChunk.fog_pars_vertex,
 
+attribute vec3 offset;
 attribute vec3 previous;
 attribute vec3 next;
 attribute float side;
 attribute float width;
 attribute float counters;
-attribute float colorPointers;
+// attribute float colorPointers;
 attribute vec2 uv;
 attribute vec3 position;
 
@@ -18,11 +19,12 @@ uniform float sizeAttenuation;
 uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 worldViewProjection;
+uniform sampler2D colorPointers;
 
 varying vec2 vUV;
 varying vec4 vColor;
 varying float vCounters;
-varying float vColorPointers;
+flat out int vColorPointers;
 
 vec2 fix( vec4 i, float aspect ) {
 
@@ -34,8 +36,8 @@ vec2 fix( vec4 i, float aspect ) {
 
 void main() {
     vCounters = counters;
-    vColorPointers = colorPointers;
-
+    vColorPointers = gl_VertexID;
+    
     float aspect = resolution.x / resolution.y;
 
     vColor = vec4( color, opacity );
@@ -43,9 +45,10 @@ void main() {
 
     // mat4 m = projection * view;
     mat4 m = worldViewProjection;
-    vec4 finalPosition = m * vec4( position, 1.0 );
-    vec4 prevPos = m * vec4( previous, 1.0 );
-    vec4 nextPos = m * vec4( next, 1.0 );
+    vec3 positionOffset = offset;
+    vec4 finalPosition = m * vec4( position + positionOffset, 1.0 );
+    vec4 prevPos = m * vec4( previous + positionOffset, 1.0 );
+    vec4 nextPos = m * vec4( next + positionOffset, 1.0 );
 
     vec2 currentP = fix( finalPosition, aspect );
     vec2 prevP = fix( prevPos, aspect );
@@ -66,7 +69,6 @@ void main() {
         //w = clamp( w / dot( miter, perp ), 0., 4. * lineWidth * width );
 
     }
-
     vec4 normal = vec4( -dir.y, dir.x, 0., 1. );
     normal.xy *= .5 * w;
     normal *= projection;

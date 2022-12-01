@@ -3,10 +3,10 @@ import { Xyz } from './GreasedLine'
  * @author roland@babylonjs.xyz
  */
 
-import { Color3, Scene, Vector2 } from '@babylonjs/core'
+import { Color3, Engine, Scene, Vector2 } from '@babylonjs/core'
 
 import { GreasedLine, GreasedLineParameters } from './GreasedLine'
-import { GreasedLineMaterialParameters } from './GreasedLineMaterial'
+import { GreasedLineMaterial, GreasedLineMaterialParameters } from './GreasedLineMaterial'
 
 export interface AddGreasedLineParameters {
   sizeStart: number
@@ -17,13 +17,15 @@ export interface AddGreasedLineParameters {
 
 export class GreasedLineBuilder {
   private _colors: number[]
-  private _colorPointer: number[]
   private _sizes: number[]
   private _points: Xyz[][]
 
-  constructor() {
+  private _engine: Engine
+
+  constructor(private _scene: Scene) {
+    this._engine = _scene.getEngine()
+
     this._colors = []
-    this._colorPointer = []
     this._sizes = []
     this._points = []
   }
@@ -36,24 +38,48 @@ export class GreasedLineBuilder {
   ) {
     materialParameters = materialParameters || {}
     const engine = scene.getEngine()
-    materialParameters.useMap = materialParameters.useMap ?? false
-    materialParameters.useAlphaMap = materialParameters.useAlphaMap ?? false
-    materialParameters.color = materialParameters.color ?? Color3.Black()
-    materialParameters.opacity = materialParameters.opacity ?? 1
-    materialParameters.resolution = materialParameters.resolution ?? new Vector2(engine.getRenderWidth(), engine.getRenderHeight())
-    materialParameters.sizeAttenuation = materialParameters.sizeAttenuation ?? false
-    materialParameters.useDash = materialParameters.useDash ?? false
-    materialParameters.dashArray = materialParameters.dashArray ?? 0
-    materialParameters.dashOffset = materialParameters.dashOffset ?? 0
-    materialParameters.dashRatio = materialParameters.dashRatio ?? 0
-    materialParameters.visibility = materialParameters.visibility ?? 1
-    materialParameters.alphaTest = materialParameters.alphaTest ?? 1
-    materialParameters.repeat = materialParameters.repeat ?? new Vector2(1, 1)
-    materialParameters.uvOffset = materialParameters.uvOffset ?? new Vector2(0, 0)
-    return new GreasedLine(name, scene, lineParameters)
+    const gl = new GreasedLine(name, scene, lineParameters)
+    const glm = new GreasedLineMaterial(name, scene, materialParameters)
+    gl.material = glm
   }
 
-  public addLine(points: Xyz[], params: AddGreasedLineParameters) {
-      this._points.push(points)
+  public addLine(points: Xyz[], colors: Color3[]) {
+    this._points.push(points)
+    this._addColors(points.length, colors)
+  }
+
+  private _addColors(pointCount: number, colors: Color3[]) {
+    this._colors.push(0, 0, 0)
+    this._colors.push(0, 0, 0)
+
+    for (let i = 0; i < pointCount - 1; i++) {
+      this._colors.push(colors[i].r * 255)
+      this._colors.push(colors[i].g * 255)
+      this._colors.push(colors[i].b * 255)
+
+      this._colors.push(colors[i].r * 255)
+      this._colors.push(colors[i].g * 255)
+      this._colors.push(colors[i].b * 255)
+    }
+  }
+
+  public build(lineParamaters: GreasedLineParameters) {
+    const mat = new GreasedLineMaterial('meshline', this._scene, {
+      useMap: false,
+      color: Color3.Blue(),
+      opacity: 1,
+      resolution: new Vector2(this._engine.getRenderWidth(), this._engine.getRenderHeight()),
+      sizeAttenuation: false,
+      lineWidth: 60,
+      colors: this._colors,
+      useColors: true,
+    })
+
+    lineParamaters.points = this._points
+
+    const ml = new GreasedLine('meshline', this._scene, lineParamaters)
+    ml.material = mat
+
+    return ml
   }
 }

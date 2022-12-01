@@ -21,7 +21,7 @@ export function boxDemo2(scene: Scene, camera: ArcRotateCamera) {
   drawLine(lines)
 
   function drawLine(points: GreasedLinePoints) {
-    const colorPointers:number[] = []
+    const colorPointers: number[] = []
 
     const colors = [255, 0, 0, 0, 0, 255]
 
@@ -54,32 +54,31 @@ export function boxDemo2(scene: Scene, camera: ArcRotateCamera) {
 
     const gl = new GreasedLine('box-line', scene, {
       points,
-      // widthCallback: (pw) => [Math.random() * 8, Math.random() * 8],
+      widthCallback: (pw) => [Math.random() * 8, Math.random() * 8],
       // widthCallback: (pw) => [Math.sin(pw)*4+4, Math.sin(pw) * 4+4],
-      colorPointers,
     })
-
+    
     const material = new GreasedLineMaterial('line', scene, {
       colors,
       useColors: true,
       resolution: new Vector2(engine.getRenderWidth(), engine.getRenderHeight()),
       lineWidth: 4,
+      colorPointers,
     })
 
     gl.material = material
 
     let timer = 0
     scene.onBeforeRenderObservable.add(() => {
-      if (timer % 200 ===0) {
-        const c = colorPointers[0]
-        const newc = Math.random()
-        colorPointers.splice(0, 8, newc, newc, newc, newc, newc, newc, newc, newc)
+      if (timer % 20 === 0) {
+        for (let i = 0; i < colorPointers.length; i++) {
+          colorPointers[i] = Math.random()
+        }
+        material.setParameters({colorPointers})
       }
       gl.rotate(Axis.X, 0.001 * scene.getAnimationRatio())
       gl.rotate(Axis.Y, 0.002 * scene.getAnimationRatio())
       gl.rotate(Axis.Z, 0.002 * scene.getAnimationRatio())
-
-      // gl.setColorPointers(colorPointer, engine)
 
       timer++
     })
