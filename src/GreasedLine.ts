@@ -1,8 +1,10 @@
 /**
  * @author roland@babylonjs.xyz
- */
+*/
 
-import { Vector3, Buffer, Mesh, VertexData, Scene, Engine, Nullable } from '@babylonjs/core'
+import { BoundingSphere, Ray, VertexBuffer } from '@babylonjs/core'
+import { Vector3, Buffer, Mesh, VertexData, Scene, Matrix, MeshBuilder } from '@babylonjs/core'
+import { GreasedLineMaterial } from './GreasedLineMaterial'
 
 export interface Xyz {
   x: number
@@ -38,7 +40,11 @@ export class GreasedLine extends Mesh {
   private _offsetBuffer?: Buffer
   private _widthBuffer?: Buffer
 
-  // private _matrixWorld: Matrix
+  private _matrixWorld: Matrix
+
+  private _boundingSphere?:BoundingSphere
+  private _boundingSphereMesh:Mesh
+
   constructor(public name: string, _scene: Scene, private _parameters: GreasedLineParameters, private _updatable: boolean = false) {
     super(name, _scene, null, null, false, false)
 
@@ -59,7 +65,10 @@ export class GreasedLine extends Mesh {
     this._points = new Float32Array()
     // this._geometry = null
     // Used to raycast
-    // this._matrixWorld = new Matrix()
+    
+    this._boundingSphereMesh = MeshBuilder.CreateSphere(`${this.name}-bounding-sphere`, {}, null)
+    this._boundingSphereMesh.setEnabled(false)
+    this._matrixWorld = this.getWorldMatrix()
     if (this._parameters.points) {
       this.setPoints(this._parameters.points)
     }
@@ -68,8 +77,6 @@ export class GreasedLine extends Mesh {
   public get positions() {
     return this._vertexPositions
   }
-
-  public setPositions(number: []) {}
 
   public get points() {
     return this._points
@@ -83,11 +90,7 @@ export class GreasedLine extends Mesh {
     return this._colorPointers.length
   }
 
-  public setPoints(points: GreasedLinePoints) {
-    this._points = points
-
-    this.initProcess()
-
+  public addPoints(points: GreasedLinePoints) {
     let indiceOffset = 0
     let pointCount = 0
 
@@ -116,7 +119,7 @@ export class GreasedLine extends Mesh {
 
       indiceOffset += (vectors.length / 3) * 2
 
-      const { previous, next, uvs, width, side } = this.preprocess(positions)
+      const { previous, next, uvs, width, side } = this._preprocess(positions)
 
       this._vertexPositions.push(...positions)
       this._indices.push(...indices)
@@ -126,10 +129,106 @@ export class GreasedLine extends Mesh {
       this._uvs.push(...uvs)
       this._width.push(...width)
       this._side.push(...side)
+      // this._colorPointers = this._parameters.colorPointers ?? [...Array(pointCount * 2)].map((_, i) => i / (pointCount * 4))
     })
-    this._colorPointers = this._parameters.colorPointers ?? [...Array(pointCount * 2)].map((_, i) => i / (pointCount * 4))
+  }
+
+  public setPoints(points: GreasedLinePoints) {
+    this._points = points
+
+    this._initGreasedLine()
+
+    this.addPoints(points)
 
     this._drawLine()
+    this._updateRaycastBoundingInfo()
+  }
+
+  private _initGreasedLine() {
+    this._vertexPositions = []
+    this._counters = []
+    this._previous = []
+    this._next = []
+    this._side = []
+    this._width = []
+    this._indices = []
+    this._uvs = []
+    this._colorPointers = []
+  }
+
+
+  public setOffsets(offsets: number[]) {
+    this._offsetBuffer && this._offsetBuffer.update(offsets)
+  }
+  public setWidth(widths: number[]) {
+    this._widthBuffer && this._widthBuffer.update(widths)
+  }
+
+  public raycast(raycaster: Ray, threshold = 0.2) {
+    
+    if (this._boundingSphere && raycaster.intersectsSphere(this._boundingSphere, threshold) === false) {
+      return
+    }
+    
+    const vStart = new Vector3()
+    const vEnd = new Vector3()
+    const vOffsetStart = new Vector3()
+    const vOffsetEnd = new Vector3()
+    
+    const indices = this.getIndices()
+    const positions = this.getVerticesData(VertexBuffer.PositionKind)
+    const widths = this._width
+    
+    const lineWidth = (this.material as GreasedLineMaterial).getParameters().lineWidth ?? 1
+    
+    const intersects = []
+    if (indices !== null && positions !== null) {
+      let i = 0, l = 0
+      for (i = 0, l = indices.length - 1; i < l; i += 3) {
+        const a = indices[i]
+        const b = indices[i + 1]
+
+        vStart.fromArray(positions, a * 3)
+        vEnd.fromArray(positions, b * 3)
+
+        if (this._offset) {
+           vOffsetStart.fromArray(this._offset, a *3) 
+           vOffsetEnd.fromArray(this._offset, b *3) 
+           vStart.addInPlace(vOffsetStart)
+           vStart.addInPlace(vOffsetEnd)
+        }
+
+        const iFloored = Math.floor(i / 3)
+        const width = widths[iFloored] !== undefined ? widths[iFloored] : 1
+        const precision = threshold + (lineWidth * width) / 2
+
+        const distance = raycaster.intersectionSegment(vStart, vEnd, precision/1000)
+        console.log('distance', distance, threshold)
+        if (distance !== -1) {
+          console.log(vStart, vEnd)
+
+          intersects.push({
+            distance: distance,
+            point: raycaster.direction.normalize().multiplyByFloats(distance, distance, distance).add(raycaster.origin),
+            index: i,
+            object: this,
+          })
+        }
+      }
+      i = l
+    }
+
+    return intersects
+  }
+
+  private _updateRaycastBoundingInfo() {
+
+    if (!this.geometry) {
+      return 
+    }
+
+    this._boundingSphereMesh.setBoundingInfo(this.getBoundingInfo())
+    this._boundingSphereMesh.bakeTransformIntoVertices(this._matrixWorld)
   }
 
   private static _Convert(points: GreasedLinePoints): number[][] {
@@ -161,32 +260,24 @@ export class GreasedLine extends Mesh {
     return []
   }
 
-  public compareV3(a: number, b: number, positions: number[]) {
-    const aa = a * 6
-    const ab = b * 6
-    return positions[aa] === positions[ab] && positions[aa + 1] === positions[ab + 1] && positions[aa + 2] === positions[ab + 2]
+  private _compareV3(positionIdx1: number, positionIdx2: number, positions: number[]) {
+    const arrayIdx1 = positionIdx1 * 6
+    const arrayIdx2 = positionIdx2 * 6
+    return (
+      positions[arrayIdx1] === positions[arrayIdx2] &&
+      positions[arrayIdx1 + 1] === positions[arrayIdx2 + 1] &&
+      positions[arrayIdx1 + 2] === positions[arrayIdx2 + 2]
+    )
   }
 
-  public copyV3(a: number, positions: number[]) {
+  private _copyV3(positionIdx: number, positions: number[]) {
     positions = positions ?? this._vertexPositions
 
-    const aa = a * 6
-    return [positions[aa], positions[aa + 1], positions[aa + 2]]
+    const arrayIdx = positionIdx * 6
+    return [positions[arrayIdx], positions[arrayIdx + 1], positions[arrayIdx + 2]]
   }
 
-  public initProcess() {
-    this._vertexPositions = []
-    this._counters = []
-    this._previous = []
-    this._next = []
-    this._side = []
-    this._width = []
-    this._indices = []
-    this._uvs = []
-    this._colorPointers = []
-  }
-
-  public preprocess(positions: number[]) {
+  private _preprocess(positions: number[]) {
     const l = positions.length / 6
 
     let wUp: number, wDown: number
@@ -198,10 +289,10 @@ export class GreasedLine extends Mesh {
     const uvs = []
     const width = []
 
-    if (this.compareV3(0, l - 1, positions)) {
-      v = this.copyV3(l - 2, positions)
+    if (this._compareV3(0, l - 1, positions)) {
+      v = this._copyV3(l - 2, positions)
     } else {
-      v = this.copyV3(0, positions)
+      v = this._copyV3(0, positions)
     }
     previous.push(v[0], v[1], v[2])
     previous.push(v[0], v[1], v[2])
@@ -225,21 +316,21 @@ export class GreasedLine extends Mesh {
       uvs.push(j / (l - 1), 1)
 
       if (j < l - 1) {
-        v = this.copyV3(j, positions)
+        v = this._copyV3(j, positions)
         previous.push(v[0], v[1], v[2])
         previous.push(v[0], v[1], v[2])
       }
       if (j > 0) {
-        v = this.copyV3(j, positions)
+        v = this._copyV3(j, positions)
         next.push(v[0], v[1], v[2])
         next.push(v[0], v[1], v[2])
       }
     }
 
-    if (this.compareV3(l - 1, 0, positions)) {
-      v = this.copyV3(1, positions)
+    if (this._compareV3(l - 1, 0, positions)) {
+      v = this._copyV3(1, positions)
     } else {
-      v = this.copyV3(l - 1, positions)
+      v = this._copyV3(l - 1, positions)
     }
     next.push(v[0], v[1], v[2])
     next.push(v[0], v[1], v[2])
@@ -292,10 +383,4 @@ export class GreasedLine extends Mesh {
   //   this._colorPointersBuffer!.update(cp)
   // }
 
-  public setOffsets(offsets: number[]) {
-    this._offsetBuffer && this._offsetBuffer.update(offsets)
-  }
-  public setWidth(widths: number[]) {
-    this._widthBuffer && this._widthBuffer.update(widths)
-  }
 }

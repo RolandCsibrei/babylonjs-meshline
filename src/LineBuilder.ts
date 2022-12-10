@@ -35,10 +35,11 @@ export class GreasedLineBuilder {
     scene: Scene,
     lineParameters: GreasedLineParameters,
     materialParameters: GreasedLineMaterialParameters,
+    updatable = false,
   ) {
     materialParameters = materialParameters || {}
     const engine = scene.getEngine()
-    const gl = new GreasedLine(name, scene, lineParameters)
+    const gl = new GreasedLine(name, scene, lineParameters, updatable)
     const glm = new GreasedLineMaterial(name, scene, materialParameters)
     gl.material = glm
   }
@@ -63,7 +64,7 @@ export class GreasedLineBuilder {
     }
   }
 
-  public build(lineParamaters: GreasedLineParameters) {
+  public build(lineParamaters: GreasedLineParameters, updatable = false) {
     const mat = new GreasedLineMaterial('meshline', this._scene, {
       useMap: false,
       color: Color3.Blue(),
@@ -77,7 +78,7 @@ export class GreasedLineBuilder {
 
     lineParamaters.points = this._points
 
-    const ml = new GreasedLine('meshline', this._scene, lineParamaters)
+    const ml = new GreasedLine('meshline', this._scene, lineParamaters, updatable)
     ml.material = mat
 
     return ml

@@ -86,6 +86,10 @@ export class GreasedLineMaterial extends ShaderMaterial {
     this.setParameters(parameters)
   }
 
+  public getParameters() {
+    return Object.freeze(this._parameters)
+  }
+
   public setParameters(parameters: GreasedLineMaterialParameters) {
     this._parameters = { ...this._parameters, ...parameters }
 
@@ -145,7 +149,4 @@ export class GreasedLineMaterial extends ShaderMaterial {
     this.setVector2('uvOffset', this._parameters.uvOffset ?? new Vector2(0, 0))
   }
 
-  public getParameters() {
-    return { ...this._parameters }
-  }
 }

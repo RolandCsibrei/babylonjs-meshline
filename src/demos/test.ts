@@ -235,13 +235,13 @@ export function testLineBuilder(scene: Scene) {
   
   const offsets = []
   for(let i=0;i<line1.length+line2.length;i++) {
-    offsets.push(100,0,1)
-    offsets.push(100,0,1)
+    offsets.push(200,0,1)
+    offsets.push(200,0,1)
   }
   
   const mesh = builder.build({
     offsets
-  })
+  }, true)
 
   let x = 0
   scene.onBeforeRenderObservable.add(() => {

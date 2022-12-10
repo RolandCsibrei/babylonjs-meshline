@@ -14,6 +14,7 @@ import { boxDemo } from './box'
 import { pbrDemo } from './pbr'
 import { boxDemo2 } from './box2'
 import { spectrumAnalyzer } from './spectrumAnalyzer'
+import { raycast } from './raycast'
 
 const canvas: HTMLCanvasElement = document.getElementById('app') as HTMLCanvasElement
 const engine = createEngine(canvas)
@@ -37,11 +38,12 @@ async function main() {
   
   spectrumAnalyzer(scene, camera)
   // testLineBuilder(scene)
-  // test2(scene)
+  // test(scene)
   // svgDemo(scene)
   // boxDemo(scene, camera)
   // boxDemo2(scene, camera)
   // pbrDemo(scene, camera)
+  // raycast(scene, camera)
 
   engine.runRenderLoop(() => {
     scene.render()

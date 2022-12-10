@@ -1,9 +1,8 @@
-import { Color4, Matrix } from '@babylonjs/core'
 /**
  * @author roland@babylonjs.xyz
  */
 
-import { ShaderMaterial, Scene, Color3, Vector2, Texture, RawTexture, Engine } from '@babylonjs/core'
+import { Matrix, Scene, Vector2 } from '@babylonjs/core'
 import { PBRCustomMaterial } from '@babylonjs/materials'
 import { GreasedLineMaterialParameters } from './GreasedLineMaterial'
 
@@ -24,6 +23,8 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
     this.AddAttribute('previous');
     this.AddAttribute('next');
     this.AddAttribute('side');
+    this.AddAttribute('offset');
+    this.AddAttribute('width');
 
     const engine = scene.getEngine()
 
