@@ -1,8 +1,9 @@
-import { scene } from './babylon';
+import { scene, camera } from './babylon';
 import { GreasedLineBuilder } from './../LineBuilder'
-import { Color3, Engine, RawTexture, Scene, Vector2, Vector3, VertexBuffer } from '@babylonjs/core'
-import { GreasedLineMaterial } from './../GreasedLineMaterial'
+import { ArcRotateCamera, Color3, Engine, RawTexture, Scene, Vector2, Vector3, VertexBuffer } from '@babylonjs/core'
+import { ColorDistribution, ColorSamplingMode, GreasedLineMaterial } from './../GreasedLineMaterial'
 import { GreasedLine } from './../GreasedLine'
+import { segmentize } from '../lineUtils';
 
 function makeLine(scene: Scene, points: Float32Array | Vector3[] | Vector3[][], color: Color3) {
   const engine = scene.getEngine()
@@ -227,7 +228,7 @@ export function testLineBuilder(scene: Scene) {
   const line2 = [new Vector3(0, 0, 100), new Vector3(100, 0, 100), new Vector3(100, 100, 100), new Vector3(200, 100, 100), new Vector3(200, 200, 100)]
 
   const colors1 = [new Color3(0, 0, 0), new Color3(1, 0, 0), new Color3(0, 0, 0), new Color3(1, 0, 0)]
-  const colors2 = [new Color3(0, 1, 0), new Color3(0, 0, 1), new Color3(0, 1, 0), new Color3(0, 0, 1)]
+  const colors2 = [new Color3(0, 1, 0), new Color3(0, 0, 1), new Color3(1, 1, 0), new Color3(0, 0, 1)]
 
   const builder = new GreasedLineBuilder(scene)
   builder.addLine(line1, colors1)
@@ -241,7 +242,7 @@ export function testLineBuilder(scene: Scene) {
   
   const mesh = builder.build({
     offsets
-  }, true)
+  }, {}, true)
 
   let x = 0
   scene.onBeforeRenderObservable.add(() => {
@@ -250,7 +251,7 @@ export function testLineBuilder(scene: Scene) {
       offsets.push(x,0,0)
       offsets.push(x,0,0)
     }
-    x+=1
+    // x+=1
     mesh.setOffsets(offsets)
     // const verticesArray = mesh.getVerticesData(VertexBuffer.PositionKind)
     // mesh.updateMeshPositions(verticesArray => {
@@ -263,4 +264,31 @@ export function testLineBuilder(scene: Scene) {
     //   })
     // })
   })
+}
+
+export function testLineBuilderColorDistribution(scene: Scene, camera: ArcRotateCamera) {
+  // const line1 = segmentize([new Vector3(-5,0,0), new Vector3(5,0,0)], 1)
+  const line1 = 
+  // segmentize(
+    [new Vector3(0, 0, 0), new Vector3(100, 0, 0), new Vector3(100, 100, 0), new Vector3(200, 100, 0), new Vector3(200, 200, 0)]
+    // ,1.1
+    // )
+  const colors1 = [new Color3(1, 0, 0), new Color3(1,0,1),  new Color3(0,1,1), new Color3(1, 1, 0)]
+
+  const builder = new GreasedLineBuilder(scene)
+  builder.addLine(line1, colors1, { colorDistribution: ColorDistribution.Repeat, 
+    colorsSamplingMode: ColorSamplingMode.Smooth,  color: Color3.Blue() })
+    
+  const mesh = builder.build({}, {
+    color: Color3.Blue(),
+    lineWidth: 60,
+    useColors: true,
+  }, true)
+
+
+  camera.zoomOn([mesh])
+  camera.radius += 10
+  camera.maxZ = 1000
+  camera.minZ = 0.1
+
 }

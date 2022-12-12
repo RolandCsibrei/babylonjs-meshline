@@ -98,7 +98,6 @@ const colorPointer = [0,0,0,0, 1,1,1,1]
 
     function add(line1: Xyz[]) {
       const vectors = xyzToVector3(line1) as Vector3[]
-      debugger
       const segments = segmentize(vectors, segmentLength)
       cnt += segments.length
       lines.push(segments)

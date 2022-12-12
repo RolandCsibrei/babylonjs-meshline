@@ -7,7 +7,6 @@ attribute vec3 next;
 attribute float side;
 attribute float width;
 attribute float counters;
-// attribute float colorPointers;
 attribute vec2 uv;
 attribute vec3 position;
 
@@ -19,7 +18,6 @@ uniform float sizeAttenuation;
 uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 worldViewProjection;
-uniform sampler2D colorPointers;
 
 varying vec2 vUV;
 varying vec4 vColor;

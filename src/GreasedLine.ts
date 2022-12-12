@@ -374,13 +374,6 @@ export class GreasedLine extends Mesh {
       this.setVerticesBuffer(offsetBuffer.createVertexBuffer('offset', 0, 3))
       this._offsetBuffer = offsetBuffer
     }
-    // const colorPointersBuffer = new Buffer(engine, this.colorPointers, true, 1)
-    // this.setVerticesBuffer(colorPointersBuffer.createVertexBuffer('colorPointers', 0, 1))
-    // this._colorPointersBuffer = colorPointersBuffer
   }
-
-  // public setColorPointers(cp: number[]) {
-  //   this._colorPointersBuffer!.update(cp)
-  // }
 
 }

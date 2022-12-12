@@ -84,12 +84,13 @@ export function xyzToVector3(xyz: Xyz | Xyz[]) {
   return new Vector3(xyz.x, xyz.y, xyz.z)
 }
 
-export function circle(radius: number, segments: number, z = 0) {
+export function circle(radius: number, segments: number, segmentAngle?: number, z = 0) {
   const points: Xyz[] = []
-  for (let i = 0; i < (Math.PI * 2) / (segments / 360); i++) {
+  const add = segmentAngle ?? (Math.PI * 2) / segments
+  for (let i = 0; i <= segments; i++) {
     points.push({
-      x: Math.cos(i) * radius,
-      y: Math.sin(i) * radius,
+      x: Math.cos(i * add) * radius,
+      y: Math.sin(i * add) * radius,
       z,
     })
   }
@@ -103,7 +104,7 @@ export function bezier(p0: Xyz, p1: Xyz, p2: Xyz, segments: number) {
     const point = getBezierPoint(i / segments, p0, p1, p2)
     points.push(point)
   }
-  
+
   return points
 }
 

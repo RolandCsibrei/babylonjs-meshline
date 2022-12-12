@@ -11,31 +11,56 @@ export interface Rgb {
 }
 
 export interface GreasedLineMaterialParameters {
-  colorPointers?: number[]
-  lineWidth?: number
-  colors?: Texture | number[]
-  map?: Texture
-  alphaMap?: Texture
-  useColors?: boolean
-  useMap?: boolean
-  useAlphaMap?: boolean
   color?: Color3
   opacity?: number
-  resolution?: Vector2
+  lineWidth?: number
+
+  useColors?: boolean
+  colors?: Texture | number[]
+  colorsSamplingMode?: ColorSamplingMode
+  colorDistribution?: ColorDistribution
+
   sizeAttenuation?: boolean
+  visibility?: number
+
+  useMap?: boolean
+  map?: Texture
+
+  alphaMap?: Texture
+  useAlphaMap?: boolean
+
+  resolution?: Vector2
   dashArray?: number
   dashOffset?: number
   dashRatio?: number
   useDash?: boolean
-  visibility?: number
   alphaTest?: number
   repeat?: Vector2
+
   uvOffset?: Vector2
+  uvRotation?: number
+  uvScale?: Vector2
+}
+
+export enum ColorDistribution {
+  Repeat,
+  Even,
+  Start,
+  End,
+  StartEnd,
+  None,
+}
+
+export enum ColorSamplingMode {
+  Exact,
+  Smooth,
 }
 
 export class GreasedLineMaterial extends ShaderMaterial {
   private _parameters: GreasedLineMaterialParameters
   private _engine: Engine
+
+  private _colorsTexture?: RawTexture
 
   private static _bton(bool?: boolean) {
     return bool ? 1 : 0
@@ -49,14 +74,24 @@ export class GreasedLineMaterial extends ShaderMaterial {
         fragment: './shaders/greasedLine',
       },
       {
-        attributes: ['uv', 'position', 'normal', 'offset', 'previous', 'next', 'side', 'width', 'counters', 'colorPointers'],
+        attributes: [
+          'uv', 
+          'position', 
+          'normal', 
+          'offset', 
+          'previous', 
+          'next', 
+          'side', 
+          'width', 
+          'counters'
+        ],
         uniforms: [
-          'count',
           'world',
           'worldView',
           'worldViewProjection',
           'view',
           'projection',
+          'count',
           'colors',
           'useColors',
           'lineWidth',
@@ -76,6 +111,8 @@ export class GreasedLineMaterial extends ShaderMaterial {
           'alphaTest',
           'repeat',
           'uvOffset',
+          'uvRotation',
+          'uvScale',
         ],
       },
     )
@@ -98,30 +135,26 @@ export class GreasedLineMaterial extends ShaderMaterial {
     if (this._parameters.colors) {
       if (this._parameters.colors instanceof Texture) {
         this.setTexture('colors', this._parameters.colors)
-        this.setInt('count', this._parameters.colors.getSize().width)
+        this.setFloat('count', this._parameters.colors.getSize().width)
       } else {
-        const colors = new RawTexture(
-          new Uint8Array(this._parameters.colors),
-          this._parameters.colors.length / 3,
-          1,
-          Engine.TEXTUREFORMAT_RGB,
-          this.getScene(),
-          false,
-          true,
-          RawTexture.NEAREST_NEAREST
-        )
-        this.setInt('count', this._parameters.colors.length/3)
-        colors.name = "greased-line-colors"
-        this.setTexture('colors', colors)
-
+        if (this._colorsTexture) {
+          this._colorsTexture.update(new Uint8Array(this._parameters.colors))
+        } else {
+          this._colorsTexture = new RawTexture(
+            new Uint8Array(this._parameters.colors),
+            this._parameters.colors.length / 3,
+            1,
+            Engine.TEXTUREFORMAT_RGB,
+            this.getScene(),
+            false,
+            true,
+            parameters.colorsSamplingMode === ColorSamplingMode.Smooth ? RawTexture.LINEAR_LINEAR : RawTexture.NEAREST_NEAREST,
+          )
+          this._colorsTexture.name = 'greased-line-colors'
+        }
+        this.setFloat('count', this._parameters.colors.length / 3)
+        this.setTexture('colors', this._colorsTexture)
       }
-    
-    }
-
-    if (this._parameters.colorPointers) {
-      const engine = this.getScene().getEngine()
-      const colorPointersBuffer = new UniformBuffer(engine, this._parameters.colorPointers, true, 'colorPointers')
-      this.setUniformBuffer('colorPointers', colorPointersBuffer) 
     }
 
     if (this._parameters.alphaMap) {
@@ -144,9 +177,10 @@ export class GreasedLineMaterial extends ShaderMaterial {
     this.setFloat('dashRatio', this._parameters.dashRatio ?? 0.5)
     this.setFloat('useDash', GreasedLineMaterial._bton(this._parameters.useDash))
     this.setFloat('visibility', this._parameters.visibility ?? 1)
-    this.setFloat('alphaTest', this._parameters.alphaTest ?? 0)
+    this.setFloat('alphaTest', this._parameters.alphaTest ?? 1)
     this.setVector2('repeat', this._parameters.repeat ?? new Vector2(1, 1))
     this.setVector2('uvOffset', this._parameters.uvOffset ?? new Vector2(0, 0))
+    this.setFloat('uvRotation', this._parameters.uvRotation ?? 0)
+    this.setVector2('uvScale', this._parameters.uvScale ?? new Vector2(1, 1))
   }
-
 }

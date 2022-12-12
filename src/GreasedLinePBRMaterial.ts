@@ -2,7 +2,7 @@
  * @author roland@babylonjs.xyz
  */
 
-import { Matrix, Scene, Vector2 } from '@babylonjs/core'
+import { Engine, Matrix, RawTexture, Scene, Texture, Vector2 } from '@babylonjs/core'
 import { PBRCustomMaterial } from '@babylonjs/materials'
 import { GreasedLineMaterialParameters } from './GreasedLineMaterial'
 
@@ -12,37 +12,96 @@ export interface Rgb {
   b: number
 }
 
+export enum ColorDistribution {
+  Repeat,
+  Even,
+  Start,
+  End,
+  StartEnd,
+  None,
+}
+
+export enum ColorSamplingMode {
+  Exact,
+  Smooth,
+}
+
 export class GreasedLinePBRMaterial extends PBRCustomMaterial {
   private _parameters: GreasedLineMaterialParameters
+  private _colorsTexture?: RawTexture
 
-  private static _bton(bool?: boolean) {
-    return bool ? 1 : 0
-  }
   constructor(name: string, scene: Scene, parameters: GreasedLineMaterialParameters) {
     super(name, scene)
-    this.AddAttribute('previous');
-    this.AddAttribute('next');
-    this.AddAttribute('side');
-    this.AddAttribute('offset');
-    this.AddAttribute('width');
+    this.AddAttribute('offset')
+    this.AddAttribute('previous')
+    this.AddAttribute('next')
+    this.AddAttribute('side')
+    this.AddAttribute('width')
+    this.AddAttribute('counters')
+    this.AddAttribute('offset')
 
     const engine = scene.getEngine()
 
-    const vecc2 = new Vector2(engine.getRenderWidth(), engine.getRenderHeight())
-    this.AddUniform('lineWidth', 'float' ,0);
-    this.AddUniform('resolution', 'vec2', vecc2 );
+    const resolution = new Vector2(engine.getRenderWidth(), engine.getRenderHeight())
+    this.AddUniform('lineWidth', 'float', parameters?.lineWidth ?? 1)
+    this.AddUniform('resolution', 'vec2', parameters.resolution ?? new Vector2(engine.getRenderWidth(), engine.getRenderHeight()))
+    this.AddUniform('sizeAttenuation', 'float', GreasedLinePBRMaterial._bton(parameters.sizeAttenuation))
+
+    this.AddUniform('dashArray', 'float', parameters?.dashArray ?? 0)
+    this.AddUniform('dashOffset', 'float', parameters?.dashOffset ?? 0)
+    this.AddUniform('dashRatio', 'float', parameters.dashRatio ?? 0.5)
+    this.AddUniform('useDash', 'float', GreasedLinePBRMaterial._bton(parameters.useDash))
+    this.AddUniform('useColors', 'float', GreasedLinePBRMaterial._bton(parameters.useColors))
+    this.AddUniform('alphaTest', 'float', parameters.alphaTest ?? 1)
+    this.AddUniform('visibilityGreasedLine', 'float', parameters.visibility ?? 1)
+
+    if (parameters.colors) {
+      if (parameters.colors instanceof Texture) {
+        this.AddUniform('count', 'float', parameters.colors.getSize().width)
+        this.AddUniform('colors', 'sampler2D', parameters.colors)
+      } else {
+        if (this._colorsTexture) {
+          this._colorsTexture.update(new Uint8Array(parameters.colors))
+        } else {
+          this._colorsTexture = new RawTexture(
+            new Uint8Array(parameters.colors),
+            parameters.colors.length / 3,
+            1,
+            Engine.TEXTUREFORMAT_RGB,
+            this.getScene(),
+            false,
+            true,
+            parameters.colorsSamplingMode === ColorSamplingMode.Smooth ? RawTexture.LINEAR_LINEAR : RawTexture.NEAREST_NEAREST,
+          )
+          this._colorsTexture.name = 'greased-line-colors'
+        }
+        this.AddUniform('count', 'float', parameters.colors.length / 3)
+        this.AddUniform('colors', 'sampler2D', this._colorsTexture)
+      }
+    } else {
+      this.AddUniform('count', 'float', 1)
+      this.AddUniform('colors', 'sampler2D', null)
+    }
 
     const m = Matrix.Identity().multiply(scene.getTransformMatrix())
 
-    this.AddUniform('worldViewProjection', 'mat4', m);
-
-
+    this.AddUniform('worldViewProjection', 'mat4', m)
 
     this.Vertex_Definitions(`
     attribute vec3 previous;
     attribute vec3 next;
     attribute float side;
+    attribute float width;
+    attribute float counters;
+    attribute vec3 offset;
+    attribute vec2 uv;
     varying vec3 vNormal;
+
+    varying vec2 vUV;
+    varying vec4 vColor;
+    varying float vCounters;
+    flat out int vColorPointers;
+
 `)
 
     this.Vertex_Begin(`
@@ -53,21 +112,23 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
     }
 `)
     this.Vertex_MainEnd(`
-
-
+    vCounters = counters;
+    vColorPointers = gl_VertexID;
     float aspect = resolution.x / resolution.y;
 
-    // mat4 m = projection * view;
+    vUV = uv;
+
     mat4 m = worldViewProjection;
-    vec4 finalPosition = m * vec4( position, 1.0 );
-    vec4 prevPos = m * vec4( previous, 1.0 );
-    vec4 nextPos = m * vec4( next, 1.0 );
+    vec3 positionOffset = offset;
+    vec4 finalPosition = m * vec4( position + positionOffset, 1.0 );
+    vec4 prevPos = m * vec4( previous + positionOffset, 1.0 );
+    vec4 nextPos = m * vec4( next + positionOffset, 1.0 );
 
     vec2 currentP = fix( finalPosition, aspect );
     vec2 prevP = fix( prevPos, aspect );
     vec2 nextP = fix( nextPos, aspect );
 
-    float w = lineWidth; //* width;
+    float w = lineWidth * width;
 
     vec2 dir;
     if( nextP == currentP ) dir = normalize( currentP - prevP );
@@ -79,87 +140,61 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
 
         vec2 perp = vec2( -dir1.y, dir1.x );
         vec2 miter = vec2( -dir.y, dir.x );
-        //w = clamp( w / dot( miter, perp ), 0., 4. * lineWidth * width );
-
     }
-
     vec4 normal = vec4( -dir.y, dir.x, 0., 1. );
     normal.xy *= .5 * w;
-    normal *= worldViewProjection;
-    // if( sizeAttenuation == 0. ) {
-    //     normal.xy *= finalPosition.w;
-    //     normal.xy /= ( vec4( resolution, 0., 1. ) * worldViewProjection ).xy;
-    // }
+    normal *= m;
+    if( sizeAttenuation == 0. ) {
+        normal.xy *= finalPosition.w;
+        normal.xy /= ( vec4( resolution, 0., 1. ) * m ).xy;
+    }
 
     finalPosition.xy += normal.xy * side;
 
     gl_Position = finalPosition;
+
 `)
 
     this.Fragment_Definitions(`
-    varying vec3 vNormal;
+      varying vec3 vNormal;
+      varying float vCounters;
+      flat in int vColorPointers;
+`)
+
+    this.Fragment_MainEnd(`
+      if( useDash == 1. ){
+        gl_FragColor.a *= ceil(mod(vCounters + dashOffset, dashArray) - (dashArray * dashRatio));
+      }
+      gl_FragColor.a *= step(vCounters, visibilityGreasedLine);
+
+      if( gl_FragColor.a < alphaTest ) discard;
+
+      if (useColors == 1.) {
+        gl_FragColor += texture2D(colors, vec2(float(vColorPointers)/float(count), 0.));
+      } 
 `)
 
     this.Fragment_Custom_Albedo(`
     normalW = vNormal;
 `)
 
-    const lineWidth = 1
     this.onBindObservable.add(() => {
-      this.getEffect().setFloat('lineWidth', lineWidth)
-      // this.getEffect().setVector2('resolution', vecc2)
       this.getEffect().setMatrix('worldViewProjection', Matrix.Identity().multiply(scene.getTransformMatrix()))
+      this.getEffect().setFloat('visibilityGreasedLine', this._parameters.visibility ?? 1)
     })
 
     this._parameters = {}
-    // this.setParameters(parameters)
   }
 
-  // public setParameters(parameters: GreasedLineMaterialParameters) {
-  //   this._parameters = { ...this._parameters, ...parameters }
-
-  //   this.setFloat('lineWidth', this._parameters.lineWidth ?? 1)
-
-  //   if (this._parameters.colors) {
-  //     if (this._parameters.colors instanceof Texture) {
-  //       this.setTexture('colors', this._parameters.colors)
-  //     } else {
-  //       const colors = new RawTexture(
-  //         new Uint8Array(this._parameters.colors),
-  //         this._parameters.colors.length / 3,
-  //         1,
-  //         Engine.TEXTUREFORMAT_RGB,
-  //         this.getScene(),
-  //       )
-  //     }
-  //   }
-
-  //   if (this._parameters.alphaMap) {
-  //     this.setTexture('alphaMap', this._parameters.alphaMap)
-  //   }
-
-  //   if (this._parameters.map) {
-  //     this.setTexture('map', this._parameters.map)
-  //   }
-
-  //   this.setFloat('useColors', GreasedLineMaterial._bton(this._parameters.useColors))
-  //   this.setFloat('useMap', GreasedLineMaterial._bton(this._parameters.useMap))
-  //   this.setFloat('useAlphaMap', GreasedLineMaterial._bton(this._parameters.useAlphaMap))
-  //   this.setColor3('color', this._parameters.color ?? Color3.White())
-  //   this.setFloat('opacity', this._parameters.opacity ?? 1)
-  //   this.setVector2('resolution', this._parameters.resolution ?? new Vector2(1, 1))
-  //   this.setFloat('sizeAttenuation', GreasedLineMaterial._bton(this._parameters.sizeAttenuation))
-  //   this.setFloat('dashArray', this._parameters.dashArray ?? 0)
-  //   this.setFloat('dashOffset', this._parameters.dashOffset ?? 0)
-  //   this.setFloat('dashRatio', this._parameters.dashRatio ?? 0.5)
-  //   this.setFloat('useDash', GreasedLineMaterial._bton(this._parameters.useDash))
-  //   this.setFloat('visibility', this._parameters.visibility ?? 1)
-  //   this.setFloat('alphaTest', this._parameters.alphaTest ?? 0)
-  //   this.setVector2('repeat', this._parameters.repeat ?? new Vector2(1, 1))
-  //   this.setVector2('uvOffset', this._parameters.uvOffset ?? new Vector2(0, 0))
-  // }
+  public setParameters(parameters: GreasedLineMaterialParameters) {
+    this._parameters = { ...this._parameters, ...parameters }
+  }
 
   public getParameters() {
     return { ...this._parameters }
+  }
+
+  private static _bton(bool?: boolean) {
+    return bool ? 1 : 0
   }
 }
