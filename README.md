@@ -26,4 +26,4 @@ Your app is ready to be deployed!
 
 ### Demos
 
-GitHub Globe - textures from https://github.com/zivaaa/bjs-tutorial
+GitHub Globe - Planet Earth from https://github.com/zivaaa/bjs-tutorial
