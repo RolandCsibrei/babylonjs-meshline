@@ -1,4 +1,5 @@
 import { Ray, Vector3 } from "@babylonjs/core"
+import { Vector3Ext } from "./Vector3Ext"
 
 export class RayExt extends Ray {
     private _vector = new Vector3()

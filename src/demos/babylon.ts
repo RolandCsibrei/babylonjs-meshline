@@ -19,9 +19,9 @@ export const createEngine = (hostCanvas: HTMLCanvasElement) => {
 export const createScene = () => {
   scene = new Scene(engine)
 
-  scene.clearColor = new Color4(1, 1, 1, 1)
-  scene.autoClear = true
-  scene.autoClearDepthAndStencil = true
+  // scene.clearColor = new Color4(1, 1, 1, 1)
+  // scene.autoClear = true
+  // scene.autoClearDepthAndStencil = true
 
   // optimize scene for opaque background
 

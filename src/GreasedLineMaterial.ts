@@ -86,10 +86,10 @@ export class GreasedLineMaterial extends ShaderMaterial {
           'counters'
         ],
         uniforms: [
-          'world',
-          'worldView',
+          // 'world',
+          // 'worldView',
           'worldViewProjection',
-          'view',
+          // 'view',
           'projection',
           'count',
           'colors',

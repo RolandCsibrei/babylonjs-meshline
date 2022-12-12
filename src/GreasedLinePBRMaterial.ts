@@ -83,9 +83,11 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
       this.AddUniform('colors', 'sampler2D', null)
     }
 
-    const m = Matrix.Identity().multiply(scene.getTransformMatrix())
+    const worldViewProjection = Matrix.Identity().multiply(scene.getTransformMatrix())
+    const projection = this.getScene().activeCamera!.getProjectionMatrix()
 
-    this.AddUniform('worldViewProjection', 'mat4', m)
+    this.AddUniform('worldViewProjection', 'mat4', worldViewProjection)
+    this.AddUniform('projection', 'mat4', projection)
 
     this.Vertex_Definitions(`
     attribute vec3 previous;
@@ -120,7 +122,7 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
 
     mat4 m = worldViewProjection;
     vec3 positionOffset = offset;
-    vec4 finalPosition = m * vec4( position + positionOffset, 1.0 );
+    vec4 finalPosition = m * vec4( vPositionW + positionOffset, 1.0 );
     vec4 prevPos = m * vec4( previous + positionOffset, 1.0 );
     vec4 nextPos = m * vec4( next + positionOffset, 1.0 );
 
@@ -143,10 +145,10 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
     }
     vec4 normal = vec4( -dir.y, dir.x, 0., 1. );
     normal.xy *= .5 * w;
-    normal *= m;
+    normal *= projection;
     if( sizeAttenuation == 0. ) {
         normal.xy *= finalPosition.w;
-        normal.xy /= ( vec4( resolution, 0., 1. ) * m ).xy;
+        normal.xy /= ( vec4( resolution, 0., 1. ) * projection ).xy;
     }
 
     finalPosition.xy += normal.xy * side;
@@ -180,6 +182,7 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
 
     this.onBindObservable.add(() => {
       this.getEffect().setMatrix('worldViewProjection', Matrix.Identity().multiply(scene.getTransformMatrix()))
+      this.getEffect().setMatrix('projection', this.getScene().activeCamera!.getProjectionMatrix())
       this.getEffect().setFloat('visibilityGreasedLine', this._parameters.visibility ?? 1)
     })
 

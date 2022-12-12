@@ -41,7 +41,6 @@ void main() {
     vColor = vec4( color, opacity );
     vUV = uv;
 
-    // mat4 m = projection * view;
     mat4 m = worldViewProjection;
     vec3 positionOffset = offset;
     vec4 finalPosition = m * vec4( position + positionOffset, 1.0 );

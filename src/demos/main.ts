@@ -43,6 +43,7 @@ async function main() {
   createLights()
 
   // spectrumAnalyzerWaves(scene, camera)
+  // spectrumAnalyzer(scene, camera)
   // testLineBuilderColorDistribution(scene, camera)
   // testLineBuilderPBRColorDistribution(scene, camera)
   // test(scene)
