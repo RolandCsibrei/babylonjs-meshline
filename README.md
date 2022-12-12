@@ -24,6 +24,6 @@ It correctly bundles Babylon in production mode and optimizes the build for the 
 The build is minified and the filenames include the hashes.<br>
 Your app is ready to be deployed!
 
-## Demos
+### Demos
 
-### GitHub Globe - textures from https://github.com/zivaaa/bjs-tutorial
+GitHub Globe - textures from https://github.com/zivaaa/bjs-tutorial
