@@ -304,7 +304,7 @@ export function flyingLines(scene: Scene, camera: ArcRotateCamera) {
     }
 
     scene.onBeforeRenderObservable.add(() => {
-      // camera.alpha += 0.005 * scene.getAnimationRatio()
+      camera.alpha += 0.005 * scene.getAnimationRatio()
 
       earth.rotation.y += 0.001 * scene.getAnimationRatio()
 

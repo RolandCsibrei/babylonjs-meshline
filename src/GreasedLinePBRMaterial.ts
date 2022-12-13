@@ -87,7 +87,8 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
     const projection = this.getScene().activeCamera!.getProjectionMatrix()
 
     this.AddUniform('worldViewProjection', 'mat4', worldViewProjection)
-    this.AddUniform('projection', 'mat4', projection)
+    // greasedLineProjection - workaround https://forum.babylonjs.com/t/github-globe-like-scene-with-flying-lines/36503/2
+    this.AddUniform('greasedLineProjection', 'mat4', projection)
 
     this.Vertex_Definitions(`
     attribute vec3 previous;
@@ -145,10 +146,10 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
     }
     vec4 normal = vec4( -dir.y, dir.x, 0., 1. );
     normal.xy *= .5 * w;
-    normal *= projection;
+    normal *= greasedLineProjection;
     if( sizeAttenuation == 0. ) {
         normal.xy *= finalPosition.w;
-        normal.xy /= ( vec4( resolution, 0., 1. ) * projection ).xy;
+        normal.xy /= ( vec4( resolution, 0., 1. ) * greasedLineProjection ).xy;
     }
 
     finalPosition.xy += normal.xy * side;
@@ -182,7 +183,7 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
 
     this.onBindObservable.add(() => {
       this.getEffect().setMatrix('worldViewProjection', Matrix.Identity().multiply(scene.getTransformMatrix()))
-      this.getEffect().setMatrix('projection', this.getScene().activeCamera!.getProjectionMatrix())
+      this.getEffect().setMatrix('greasedLineProjection', this.getScene().activeCamera!.getProjectionMatrix())
       this.getEffect().setFloat('visibilityGreasedLine', this._parameters.visibility ?? 1)
     })
 
