@@ -40,7 +40,7 @@ function createDebug() {
  */
 async function main() {
   // createDebug()
-  createLights()
+  // createLights()
 
   // spectrumAnalyzerWaves(scene, camera)
   // spectrumAnalyzer(scene, camera)
