@@ -2,7 +2,7 @@
  * @author roland@babylonjs.xyz
  */
 
-import { Engine, Matrix, RawTexture, Scene, Texture, Vector2 } from '@babylonjs/core'
+import { Color3, Engine, Matrix, RawTexture, Scene, Texture, Vector2 } from '@babylonjs/core'
 import { PBRCustomMaterial } from '@babylonjs/materials'
 import { GreasedLineMaterialParameters } from './GreasedLineMaterial'
 
@@ -27,11 +27,19 @@ export enum ColorSamplingMode {
 }
 
 export class GreasedLinePBRMaterial extends PBRCustomMaterial {
+  private _engine: Engine
+
   private _parameters: GreasedLineMaterialParameters
   private _colorsTexture?: RawTexture
 
+  private _updateUniforms = false
+
+
   constructor(name: string, scene: Scene, parameters: GreasedLineMaterialParameters) {
     super(name, scene)
+
+    this._engine = scene.getEngine()
+
     this.AddAttribute('offset')
     this.AddAttribute('previous')
     this.AddAttribute('next')
@@ -53,7 +61,7 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
     this.AddUniform('useDash', 'float', GreasedLinePBRMaterial._bton(parameters.useDash))
     this.AddUniform('useColors', 'float', GreasedLinePBRMaterial._bton(parameters.useColors))
     this.AddUniform('alphaTest', 'float', parameters.alphaTest ?? 1)
-    this.AddUniform('visibilityGreasedLine', 'float', parameters.visibility ?? 1)
+    this.AddUniform('greasedLineVisibility', 'float', parameters.visibility ?? 1) // visibility uniform is already used
 
     if (parameters.colors) {
       if (parameters.colors instanceof Texture) {
@@ -168,7 +176,7 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
       if( useDash == 1. ){
         gl_FragColor.a *= ceil(mod(vCounters + dashOffset, dashArray) - (dashArray * dashRatio));
       }
-      gl_FragColor.a *= step(vCounters, visibilityGreasedLine);
+      gl_FragColor.a *= step(vCounters, greasedLineVisibility);
 
       if( gl_FragColor.a < alphaTest ) discard;
 
@@ -184,7 +192,27 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
     this.onBindObservable.add(() => {
       this.getEffect().setMatrix('worldViewProjection', Matrix.Identity().multiply(scene.getTransformMatrix()))
       this.getEffect().setMatrix('greasedLineProjection', this.getScene().activeCamera!.getProjectionMatrix())
-      this.getEffect().setFloat('visibilityGreasedLine', this._parameters.visibility ?? 1)
+
+      if (this._updateUniforms) {
+        this.getEffect().setFloat('greasedLineVisibility', this._parameters.visibility ?? 1)
+        this.getEffect().setFloat('useColors', GreasedLinePBRMaterial._bton(this._parameters.useColors))
+        this.getEffect().setFloat('useMap', GreasedLinePBRMaterial._bton(this._parameters.useMap))
+        this.getEffect().setFloat('useAlphaMap', GreasedLinePBRMaterial._bton(this._parameters.useAlphaMap))
+        this.getEffect().setColor3('color', this._parameters.color ?? Color3.White())
+        this.getEffect().setVector2('resolution', this._parameters.resolution ?? new Vector2(this._engine.getRenderWidth(), this._engine.getRenderHeight()))
+        this.getEffect().setFloat('sizeAttenuation', GreasedLinePBRMaterial._bton(this._parameters.sizeAttenuation))
+        this.getEffect().setFloat('dashArray', this._parameters.dashArray ?? 0)
+        this.getEffect().setFloat('dashOffset', this._parameters.dashOffset ?? 0)
+        this.getEffect().setFloat('dashRatio', this._parameters.dashRatio ?? 0.5)
+        this.getEffect().setFloat('useDash', GreasedLinePBRMaterial._bton(this._parameters.useDash))
+
+        // this.getEffect().setFloat('alphaTest', this._parameters.alphaTest ?? 1)
+        // this.getEffect().setVector2('repeat', this._parameters.repeat ?? new Vector2(1, 1))
+        // this.getEffect().setVector2('uvOffset', this._parameters.uvOffset ?? new Vector2(0, 0))
+        // this.getEffect().setFloat('uvRotation', this._parameters.uvRotation ?? 0)
+        // this.getEffect().setVector2('uvScale', this._parameters.uvScale ?? new Vector2(1, 1))
+        this._updateUniforms = false
+      }
     })
 
     this._parameters = {}
@@ -192,11 +220,63 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
 
   public setParameters(parameters: GreasedLineMaterialParameters) {
     this._parameters = { ...this._parameters, ...parameters }
+    this._updateUniforms = true
   }
 
   public getParameters() {
     return { ...this._parameters }
   }
+
+  public setVisibility(value: number) {
+    this._parameters.visibility = value
+    this._updateUniforms = true
+  }
+
+  public setLineWidth(value: number) {
+    this._parameters.lineWidth = value
+    this._updateUniforms = true
+  }
+
+  public setResolution(value: Vector2) {
+    this._parameters.resolution = value
+    this._updateUniforms = true
+  }
+  
+  public setSizeAttenuation(value: boolean) {
+    this._parameters.sizeAttenuation = value
+    this._updateUniforms = true
+  }
+
+  public setDashArray(value: number) {
+    this._parameters.dashArray = value
+    this._updateUniforms = true
+  }
+
+  public setDashOffset(value: number) {
+    this._parameters.dashOffset = value
+    this._updateUniforms = true
+  }
+
+  public setDashRatio(value: number) {
+    this._parameters.dashRatio = value
+    this._updateUniforms = true
+  }
+
+  public setUseDash(value: boolean) {
+    this._parameters.useDash = value
+    this._updateUniforms = true
+  }
+
+  public setuUeColors(value: boolean) {
+    this._parameters.useColors = value
+    this._updateUniforms = true
+  }
+
+  public setAlphaTest(value: number) {
+    this._parameters.alphaTest = value
+    this._updateUniforms = true
+  }
+
 
   private static _bton(bool?: boolean) {
     return bool ? 1 : 0

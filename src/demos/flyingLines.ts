@@ -106,7 +106,6 @@ export function flyingLines(scene: Scene, camera: ArcRotateCamera) {
     lines.set(`line-${i}`, flyingLine)
   }
 
-
   setTimeout(() => {
     animate()
   }, 2000)
@@ -118,9 +117,8 @@ export function flyingLines(scene: Scene, camera: ArcRotateCamera) {
         l.lineMesh.rotate(Axis.Z, l.direction.z * l.speed * scene.getAnimationRatio())
         l.lineMesh.rotate(Axis.Y, l.direction.y * l.speed * scene.getAnimationRatio())
         l.lineMesh.rotate(Axis.X, l.direction.x * l.speed * scene.getAnimationRatio())
-        l.material.setParameters({
-          visibility: l.visibility,
-        })
+
+        l.material.setVisibility(l.visibility)
 
         l.material.alpha = l.opacity
         l.material.alphaMode = Material.MATERIAL_ALPHABLEND
@@ -147,14 +145,14 @@ export function flyingLines(scene: Scene, camera: ArcRotateCamera) {
   }
 
   function createSkyBox() {
-    const skybox = MeshBuilder.CreateBox('universe', { size: 10000.0 }, scene) //создаем гигантский куб
+    const skybox = MeshBuilder.CreateBox('universe', { size: 10000.0 }, scene)
 
-    const skyboxMaterial = new StandardMaterial('universe', scene) //создаем материал
-    skyboxMaterial.backFaceCulling = false //Включаем видимость меша изнутри
-    skyboxMaterial.reflectionTexture = new CubeTexture('textures/universe/universe', scene) //задаем текстуру скайбокса как текстуру отражения
-    skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE //настраиваем скайбокс текстуру так, чтобы грани были повернуты правильно друг к другу
-    skyboxMaterial.disableLighting = true //отключаем влияние света
-    skybox.material = skyboxMaterial //задаем матерал мешу
+    const skyboxMaterial = new StandardMaterial('universe', scene)
+    skyboxMaterial.backFaceCulling = false
+    skyboxMaterial.reflectionTexture = new CubeTexture('textures/universe/universe', scene)
+    skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE
+    skyboxMaterial.disableLighting = true
+    skybox.material = skyboxMaterial
     return skybox
   }
 
@@ -164,9 +162,8 @@ export function flyingLines(scene: Scene, camera: ArcRotateCamera) {
     lightSourceMesh.diffuse = new Color3(0.5, 0.5, 0.5)
 
     // Earth
-    const earth = MeshBuilder.CreateSphere('earth', { diameter: config.EARTH_DIAMETER }, scene)
-    // const earth = Mesh.CreateSphere('earth', config.PLANET_V, config.PLANET_RADIUS, scene)
-    earth.position = new Vector3(-250.0, -10, 0) //задам позицию на сцене
+    const earth = MeshBuilder.CreateSphere('earth', { segments: config.EARTH_V, diameter: config.EARTH_DIAMETER }, scene)
+    earth.position = new Vector3(-250.0, -10, 0)
 
     earth.rotation.z = Math.PI
     earth.applyDisplacementMap('/textures/earth-height.png', 0, 1)
