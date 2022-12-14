@@ -45,7 +45,7 @@ export class GreasedLine extends Mesh {
   private _boundingSphere?:BoundingSphere
   private _boundingSphereMesh:Mesh
 
-  constructor(public name: string, _scene: Scene, private _parameters: GreasedLineParameters, private _updatable: boolean = false) {
+  constructor(public name: string, _scene: Scene, private _parameters: GreasedLineParameters, private _updatable: boolean = false, private _lazy = false) {
     super(name, _scene, null, null, false, false)
 
     this._vertexPositions = []
@@ -64,7 +64,6 @@ export class GreasedLine extends Mesh {
 
     this._points = new Float32Array()
     // this._geometry = null
-    // Used to raycast
     
     this._boundingSphereMesh = MeshBuilder.CreateSphere(`${this.name}-bounding-sphere`, {}, null)
     this._boundingSphereMesh.setEnabled(false)
@@ -129,7 +128,6 @@ export class GreasedLine extends Mesh {
       this._uvs.push(...uvs)
       this._width.push(...width)
       this._side.push(...side)
-      // this._colorPointers = this._parameters.colorPointers ?? [...Array(pointCount * 2)].map((_, i) => i / (pointCount * 4))
     })
   }
 
@@ -140,8 +138,10 @@ export class GreasedLine extends Mesh {
 
     this.addPoints(points)
 
-    this._drawLine()
-    this._updateRaycastBoundingInfo()
+    if (!this._lazy) {
+      this._drawLine()
+      this._updateRaycastBoundingInfo()
+    }
   }
 
   private _initGreasedLine() {

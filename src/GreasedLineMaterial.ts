@@ -65,6 +65,7 @@ export class GreasedLineMaterial extends ShaderMaterial {
   private static _bton(bool?: boolean) {
     return bool ? 1 : 0
   }
+  
   constructor(name: string, scene: Scene, parameters: GreasedLineMaterialParameters) {
     super(
       name,
@@ -86,10 +87,7 @@ export class GreasedLineMaterial extends ShaderMaterial {
           'counters'
         ],
         uniforms: [
-          // 'world',
-          // 'worldView',
           'worldViewProjection',
-          // 'view',
           'projection',
           'count',
           'colors',

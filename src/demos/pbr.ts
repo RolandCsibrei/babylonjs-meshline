@@ -1,10 +1,9 @@
-import { PBRCustomMaterial } from '@babylonjs/materials'
 import { GreasedLine, GreasedLinePoints } from './../GreasedLine'
 import { ArcRotateCamera, Axis, BezierCurve, Color3, Color4, GlowLayer, Scene, Vector2, Vector3 } from '@babylonjs/core'
 import { Xyz } from '../GreasedLine'
 import { ColorDistribution, ColorSamplingMode, GreasedLinePBRMaterial } from '../GreasedLinePBRMaterial'
+import { GreasedLineBuilder } from './../GraesedLineBuilder';
 import { bezier, circle, segmentize } from '../lineUtils'
-import { GreasedLineBuilder } from '../LineBuilder'
 
 export function pbrDemo(scene: Scene, camera: ArcRotateCamera) {
   const engine = scene.getEngine()

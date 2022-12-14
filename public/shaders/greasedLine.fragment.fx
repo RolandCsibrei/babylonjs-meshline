@@ -1,7 +1,5 @@
 //   THREE.ShaderChunk.fog_pars_fragment,
 //   THREE.ShaderChunk.logdepthbuf_pars_fragment,
-// attribute float colorPointers;
-
 
 uniform sampler2D colors;
 uniform sampler2D map;
@@ -26,25 +24,22 @@ varying vec4 vColor;
 varying float vCounters;
 flat in int vColorPointers;
 
-vec2 rotateUV(vec2 uv, vec2 pivot, float rotation) {
+vec2 rotateUV(vec2 uv, /*vec2 pivot,*/ float rotation) {
     float sine = sin(rotation);
     float cosine = cos(rotation);
 
-    uv -= pivot;
+    // uv -= pivot;
     uv.x = uv.x * cosine - uv.y * sine;
     uv.y = uv.x * sine + uv.y * cosine;
-    uv += pivot;
+    // uv += pivot;
 
     return uv;
 }
 
 void main() {
 
-      //   THREE.ShaderChunk.logdepthbuf_fragment,
-    // float vColorPointers = colorPointers ;
-
     vec4 c = vColor;
-    vec2 uv = rotateUV(vUV * uvScale, vec2(0.), uvRotation) + uvOffset;
+    vec2 uv = rotateUV(vUV * uvScale, uvRotation) + uvOffset;
   
     if( useMap == 1. ) c *= texture2D( map, uv * repeat );
     if( useAlphaMap == 1. ) {

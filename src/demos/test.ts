@@ -1,5 +1,5 @@
 import { scene, camera } from './babylon';
-import { GreasedLineBuilder } from './../LineBuilder'
+import { GreasedLineBuilder } from './../GraesedLineBuilder'
 import { ArcRotateCamera, Color3, Engine, RawTexture, Scene, Vector2, Vector3, VertexBuffer } from '@babylonjs/core'
 import { ColorDistribution, ColorSamplingMode, GreasedLineMaterial } from './../GreasedLineMaterial'
 import { GreasedLine } from './../GreasedLine'
