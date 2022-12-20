@@ -93,7 +93,7 @@ export function spectrumAnalyzerWaves(scene: Scene, camera: ArcRotateCamera) {
 
     const gridMaterial = new GreasedLineMaterial('gridMaterail', scene, {
       color: new Color3(0, 0, 1),
-      lineWidth: 10,
+      width: 10,
     })
 
     grid.material = gridMaterial

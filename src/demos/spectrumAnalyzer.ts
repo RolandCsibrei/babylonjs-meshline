@@ -68,13 +68,13 @@ export function spectrumAnalyzer(scene: Scene, camera: ArcRotateCamera) {
     map: texture,
     opacity: 1,
     sizeAttenuation: false,
-    lineWidth: 14,
+    width: 14,
   })
 
   const waveMaterial = new GreasedLineMaterial('waveMaterial', scene, {
     color: Color3.Red(),
     sizeAttenuation: true,
-    lineWidth: 24,
+    width: 24,
     dashArray: 1 / numOfBars,
     dashOffset: 0,
     dashRatio: 0.4,

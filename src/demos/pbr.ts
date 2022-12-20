@@ -54,7 +54,7 @@ export function pbrDemo(scene: Scene, camera: ArcRotateCamera) {
       opacity: 1,
       resolution: new Vector2(engine.getRenderWidth(), engine.getRenderHeight()),
       sizeAttenuation: false,
-      lineWidth: 40,
+      width: 40,
       visibility: 1,
       useDash: true,
       dashArray: 0.1,
@@ -82,7 +82,7 @@ export function pbrDemo(scene: Scene, camera: ArcRotateCamera) {
       opacity: 1,
       resolution: new Vector2(engine.getRenderWidth(), engine.getRenderHeight()),
       sizeAttenuation: false,
-      lineWidth: 40,
+      width: 40,
       visibility: 1,
     })
 
@@ -148,7 +148,7 @@ export function testLineBuilderPBRColorDistribution(scene: Scene, camera: ArcRot
     
   const mesh = builder.buildPBR({}, {
     color: Color3.Blue(),
-    lineWidth: 60,
+    width: 60,
     useColors: true,
   }, true)
 

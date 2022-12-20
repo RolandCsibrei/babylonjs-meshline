@@ -50,6 +50,7 @@ void main() {
     }
     if (useColors == 1.) {
         c = texture2D(colors, vec2(float(vColorPointers)/count, 0.));
+        // c = texture2D(colors, vUV);
     } 
 
     gl_FragColor = c;

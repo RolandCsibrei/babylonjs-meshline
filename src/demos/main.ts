@@ -9,7 +9,7 @@ import './style.css'
 import { svgDemo } from './svg'
 import { GreasedLine } from '../GreasedLine'
 import { GreasedLineMaterial } from '../GreasedLineMaterial'
-import { test, test2, test3, testLineBuilder, testLineBuilderColorDistribution } from './test'
+import { test, testLineBuilderColorDistribution } from './test'
 import { boxDemo } from './box'
 import { pbrDemo, testLineBuilderPBRColorDistribution } from './pbr'
 import { boxDemo2 } from './box2'
@@ -17,6 +17,7 @@ import { spectrumAnalyzer } from './spectrumAnalyzer'
 import { raycast } from './raycast'
 import { spectrumAnalyzerWaves } from './spectrumAnalyzerWaves'
 import { flyingLines } from './flyingLines'
+import { dash } from './dash'
 
 const canvas: HTMLCanvasElement = document.getElementById('app') as HTMLCanvasElement
 const engine = createEngine(canvas)
@@ -44,7 +45,7 @@ async function main() {
 
   // spectrumAnalyzerWaves(scene, camera)
   // spectrumAnalyzer(scene, camera)
-  testLineBuilderColorDistribution(scene, camera)
+  // testLineBuilderColorDistribution(scene, camera)
   // testLineBuilderPBRColorDistribution(scene, camera)
   // test(scene)
   // test2(scene)
@@ -54,6 +55,8 @@ async function main() {
   // boxDemo2(scene, camera)
   // pbrDemo(scene, camera)
   // raycast(scene, camera)
+
+  dash(scene, camera)
 
   engine.runRenderLoop(() => {
     scene.render()

@@ -69,7 +69,7 @@ const colorPointer = [0,0,0,0, 1,1,1,1]
       opacity: 1,
       resolution: new Vector2(engine.getRenderWidth(), engine.getRenderHeight()),
       sizeAttenuation: false,
-      lineWidth: 40,
+      width: 40,
       visibility: 1,
     })
 

@@ -62,7 +62,7 @@ export function boxDemo2(scene: Scene, camera: ArcRotateCamera) {
       colors,
       useColors: true,
       resolution: new Vector2(engine.getRenderWidth(), engine.getRenderHeight()),
-      lineWidth: 4,
+      width: 4,
       colorPointers,
     })
 

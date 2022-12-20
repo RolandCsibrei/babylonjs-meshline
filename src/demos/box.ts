@@ -50,7 +50,7 @@ export function boxDemo(scene: Scene, camera: ArcRotateCamera) {
       opacity: 1,
       resolution: new Vector2(engine.getRenderWidth(), engine.getRenderHeight()),
       sizeAttenuation: false,
-      lineWidth: 3,
+      width: 3,
       visibility: 1,
     })
 
@@ -84,7 +84,7 @@ export function boxDemo(scene: Scene, camera: ArcRotateCamera) {
 
       material.setParameters({
         colors,
-        lineWidth
+        width: lineWidth
       })
 
       time += 1

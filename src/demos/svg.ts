@@ -61,7 +61,7 @@ export function svgDemo(scene: Scene) {
       opacity: 1,
       resolution: new Vector2(engine.getRenderWidth(), engine.getRenderHeight()),
       sizeAttenuation: true,
-      lineWidth: 1,
+      width: 1,
       repeat: new Vector2(10, 1),
       
       visibility: 1,

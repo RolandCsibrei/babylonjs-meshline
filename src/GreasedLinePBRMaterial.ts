@@ -51,7 +51,7 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
     const engine = scene.getEngine()
 
     const resolution = new Vector2(engine.getRenderWidth(), engine.getRenderHeight())
-    this.AddUniform('lineWidth', 'float', parameters?.lineWidth ?? 1)
+    this.AddUniform('lineWidth', 'float', parameters?.width ?? 1)
     this.AddUniform('resolution', 'vec2', parameters.resolution ?? new Vector2(engine.getRenderWidth(), engine.getRenderHeight()))
     this.AddUniform('sizeAttenuation', 'float', GreasedLinePBRMaterial._bton(parameters.sizeAttenuation))
 
@@ -69,10 +69,10 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
         this.AddUniform('colors', 'sampler2D', parameters.colors)
       } else {
         if (this._colorsTexture) {
-          this._colorsTexture.update(new Uint8Array(parameters.colors))
+          // this._colorsTexture.update(new Uint8Array(parameters.colors))
         } else {
           this._colorsTexture = new RawTexture(
-            new Uint8Array(parameters.colors),
+            new Uint8Array([]), //parameters.colors),
             parameters.colors.length / 3,
             1,
             Engine.TEXTUREFORMAT_RGB,
@@ -106,8 +106,8 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
     attribute float counters;
     attribute vec3 offset;
     attribute vec2 uv;
-    varying vec3 vNormal;
 
+    varying vec3 vNormal;
     varying vec2 vUV;
     varying vec4 vColor;
     varying float vCounters;
@@ -139,7 +139,7 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
     vec2 prevP = fix( prevPos, aspect );
     vec2 nextP = fix( nextPos, aspect );
 
-    float w = lineWidth * width;
+    float w =  lineWidth * width;
 
     vec2 dir;
     if( nextP == currentP ) dir = normalize( currentP - prevP );
@@ -183,6 +183,7 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
       if (useColors == 1.) {
         gl_FragColor += texture2D(colors, vec2(float(vColorPointers)/float(count), 0.));
       } 
+
 `)
 
     this.Fragment_Custom_Albedo(`
@@ -233,7 +234,7 @@ export class GreasedLinePBRMaterial extends PBRCustomMaterial {
   }
 
   public setLineWidth(value: number) {
-    this._parameters.lineWidth = value
+    this._parameters.width = value
     this._updateUniforms = true
   }
 

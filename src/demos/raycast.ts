@@ -13,7 +13,7 @@ function makeLine(scene: Scene, points: GreasedLinePoints, color: Color3) {
     opacity: 1,
     resolution: new Vector2(engine.getRenderWidth(), engine.getRenderHeight()),
     sizeAttenuation: false,
-    lineWidth:100,
+    width:100,
   })
   const line = new GreasedLine('meshline', scene, {
     points,

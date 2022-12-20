@@ -5,13 +5,13 @@ attribute vec3 offset;
 attribute vec3 previous;
 attribute vec3 next;
 attribute float side;
-attribute float width;
+attribute float segmentWidth;
 attribute float counters;
 attribute vec2 uv;
 attribute vec3 position;
 
 uniform vec2 resolution;
-uniform float lineWidth;
+uniform float width;
 uniform vec3 color;
 uniform float opacity;
 uniform float sizeAttenuation;
@@ -51,7 +51,7 @@ void main() {
     vec2 prevP = fix( prevPos, aspect );
     vec2 nextP = fix( nextPos, aspect );
 
-    float w = lineWidth * width;
+    float w = width * segmentWidth;
 
     vec2 dir;
     if( nextP == currentP ) dir = normalize( currentP - prevP );
@@ -63,7 +63,7 @@ void main() {
 
         vec2 perp = vec2( -dir1.y, dir1.x );
         vec2 miter = vec2( -dir.y, dir.x );
-        //w = clamp( w / dot( miter, perp ), 0., 4. * lineWidth * width );
+        //w = clamp( w / dot( miter, perp ), 0., 4. * width * segmentWidth );
 
     }
     vec4 normal = vec4( -dir.y, dir.x, 0., 1. );

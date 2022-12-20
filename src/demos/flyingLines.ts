@@ -70,7 +70,7 @@ export function flyingLines(scene: Scene, camera: ArcRotateCamera) {
     const { points, cnt } = getPoints(config.EARTH_DIAMETER, length)
     const lineMesh = drawLine(points)
     const material = new GreasedLinePBRMaterial('line', scene, {
-      lineWidth: 2,
+      width: 2,
       visibility: 0,
       alphaTest: 0.001,
     })
