@@ -18,6 +18,7 @@ import { raycast } from './raycast'
 import { spectrumAnalyzerWaves } from './spectrumAnalyzerWaves'
 import { flyingLines } from './flyingLines'
 import { dash } from './dash'
+import { hello } from './hello'
 
 const canvas: HTMLCanvasElement = document.getElementById('app') as HTMLCanvasElement
 const engine = createEngine(canvas)
@@ -56,7 +57,8 @@ async function main() {
   // pbrDemo(scene, camera)
   // raycast(scene, camera)
 
-  dash(scene, camera)
+  // dash(scene, camera)
+  hello(scene, camera)
 
   engine.runRenderLoop(() => {
     scene.render()
